@@ -23,6 +23,7 @@
 			body {
 				font-family: 'Inter', sans-serif;
 				text-align: justify;
+				line-height: 1.6;
 
 			}
 		</style>
@@ -30,7 +31,7 @@
 	<body>
 		<div class="container">
 		<h1>CS184/284A Spring 2025 Homework 1 Write-Up</h1>
-		<div style="text-align: center;">Names: Jaewon Hur, Heekyung Lee </div>
+		<div style="text-align: center;">Name: Jaewon Hur, Heekyung Lee </div>
 
 		<br>
 
@@ -54,39 +55,42 @@
 		<h2>Task 1: Drawing Single-Color Triangles</h2>
 		In task 1, we implement a simple rasterizer that can draw triangles. We implemented the rasterization algorithm that fills the triangle with a single color.<br><br> Below, we explain how we implemented the rasterizer algorithm and provided an example of a rasterized triangle image.
 
-		<h3>Rasterization Algorithm We Used:</h3>
+		<h3>[1] Rasterization Algorithm We Used:</h3>
 		<p>
 			We use a bounding box algorithm to rasterize the triangle. We compute the bounding box by determining the smallest axis-aligned rectangle that contains the triangle. The bounding box is computed by the minimum and maximum x and y coordinates of the triangle vertices.
 		</p>
 		<p>
-			After computing the bounding box, we iterate over all the pixels in the bounding box. For each pixel, we check if the pixel is inside the triangle by computing the normal vector and checking if it is on the same side. <br> <br> If the pixel is inside the triangle, we color the pixel with the color of the triangle. Here, each pixel is sampled only once at its center (x + 0.5, y + 0.5).
+			After computing the bounding box, we iterate over all the pixels in the bounding box. For each pixel, we check if the pixel is inside the triangle using function <code>is_inside_triangle()</code>. <br> <br> If the pixel is inside the triangle, we color the pixel with the color of the triangle.(<code>fill_pixel()</code>) Here, each pixel is sampled only once at its center <code>(x + 0.5, y + 0.5)</code>.
+
+			When we define the is_inside_triangle, we have to check for both side of the normal vectors.<br><br>
+			For each line vector l-*, we consider two conditions <code>(l_0 >=0 && l_1 >=0 && l_2 >=0) or (l_0 <=0 && l_1 <=0 && l_2 <=0)</code> since the normal vector can be either side of the triangle.
 		</p>
 		<p>
-			We implemented the rasterizer algorithm in the function <code>rasterize_triangle</code> in <code>rasterizer.cpp</code>.
+			The rasterizer algorithm is in the function <code>rasterize_triangle</code> in <code>rasterizer.cpp</code>.
 		</p>
 
 		<h3>Example image of a rasterized triangle:</h3>
 		<figure>
-			<img src="../hw1/image/screenshot_2-23_20-49-0.png" alt="" style="width:50%"/>
+			<img src="../hw1/image/screenshot_2-23_20-49-0.png" alt="" style="width:100%"/>
 			<figcaption> svg/test4.svg </figcaption>
 		</figure>
 
-		<h3>Efficiency Explanation</h3>
+		<h3>[2] Efficiency Explanation</h3>
 		<p>
-			Our rasterization algorithm is efficient because it only iterates over the pixels in the bounding box of the triangle. This is much faster than iterating over "all" the pixels in the image. Additionally, we use the bounding box to quickly determine if a pixel is inside the triangle. This reduces the number of computations needed to rasterize the triangle.
+			Our rasterization algorithm is efficient because it only iterates over the <I>pixels in the bounding box of the triangle</I>. This is much faster than iterating over <I>all</I> the pixels in the image. Additionally, we use the bounding box to quickly determine if a pixel is inside the triangle. This reduces the number of computations needed to rasterize the triangle.
 		</p><br>
 
 		<h2>Task 2: Antialiasing by Supersampling</h2>
 		Supersampling is a technique used to reduced aliasing and to imporve the quality of rasterized images by sampling multiple points <b> within a pixel </b> and averaging the values to reduce jaggies. <br><br> In this task, we implemented supersampling to improve the quality of the rendered image. Below, we explain how we implemented supersampling and provide examples of images rendered with different supersample rates.
 
-		<h3>Supersampling Algorithm We Used:</h3>
+		<h3>[1] Supersampling Algorithm We Used:</h3>
 		<p>
-			The number of subpixels is determined by <code> sample_rate </code>. Each pixel (px, py) is divided into <code> sqrt(sample_rate) x sqrt(sample_rate) </code> subsamples. We loop through exah subsample and do a point-in-triangle test. If the subsample is inside the triangle, we store the color in the <color> sample_buffer </color>. <br> Later in the <code>resolve_to_framebuffer </code>, we simply average the color of the subpixels to get the final color of the pixel.
+			To implement supersampling, we define a sample buffer, where the number of subpixels within each pixel is determined by the <code>sample_rate</code> parameter. Each pixel (px, py) is divided into <code> sqrt(sample_rate) x sqrt(sample_rate) </code> subsamples.<br><br> We loop through exah subsample and do a point-in-triangle test (<code>is_inside_triangle()</code>). To accurately position the sample points in the <I> sample buffer</I>, we calculate the coordinates using <code>sample_x = px + (i + 0.5f) / sqrt_sample_rate;</code> to ensure the points are correctly centered when locating the pixel. If the subsample is inside the triangle, we store the color in the <color> sample_buffer </color>. <br><br> On the last part using <code>resolve_to_framebuffer </code>, we simply average the color of the subpixels to get the final color of the pixel.
 		</p>
-		<h3>Why is Supersampling Useful?</h3>
+		<h3>[2] Why is Supersampling Useful?</h3>
 		<p>
 			Supersampling is useful because it reduces aliases such as jaggies. We reduce high frequency artifacts by sampling multiple points within the pixel. This results in a smoother image. Especially, sharp and small tirangles fall between pixel boundaries which can be fixed using Supersampling method. Below in the images, we show some examples with different supersample rates.
-		</p>
+		</p><br>
 		<div style="display: flex; flex-direction: column; align-items: center;">
 			<table style="width: 100%; text-align: center; border-collapse: collapse;">
 			  <tr>
@@ -110,70 +114,69 @@
 				</td>
 			  </tr>
 			</table>
-		</div>
+		</div><br> 
 
-		<h3>Modification in Rasterization Pipeline</h3>
+		<h3>[3] Modification in Rasterization Pipeline</h3>
 		<p>
-			These are the modifications we made to the rasterization pipeline to implement supersampling:<br><br>
-			<b>1. Increase sampling per pixel. <br> </b>
-			<b>2. Enlarge the Sample Storage :</b> We use <code> sample_buffer </code> to hold more than one color per pixel.<br>
-			<b>3. Add <code> resolve_to_framebuffer() </code>:</b> We do a final pass to average the colors and write them to the framebuffer.
-		</p><br>
+			This is the original Rasterization Pipeline:<br>
+			<li><strong>Vertex Processing</strong> → Transform vertices to screen space</li>
+			<li><strong>Primitive Assembly</strong> → Convert vertices into triangles</li>
+			<li><strong>Rasterization</strong> → Convert triangles into pixels</li>
+			<li><strong>Fragment Processing</strong> → Apply colors, textures, and lighting</li>
+			<li><strong>Output to Framebuffer</strong> → Store final image for rendering</li>
+		</p>
+		<p>
+			To implement Supersampling, these modifications were made to the rasterization pipeline:<br>
+			<b>(1) Increase sampling per pixel.</b> <br>
+			<b>(2) Enlarge the Sample Storage:</b> We use <code> sample_buffer </code> to hold more than one color per pixel.<br>
+			<b>(3) Add <code> resolve_to_framebuffer() </code>:</b> We do a final pass to average the colors and write them to the framebuffer.
+		</p>
 
 		<h2>Task 3: Transforms</h2>
-		<h3>Translation</h3>
+		<h3>[1] Translation</h3>
 		<b> Moves an object in 2D space without changing its shape, size or orientation. </b>
 		<p>
 			We use a translation matrix (3x3) used in homogeneous coordinates to move the object. The translation matrix is defined as below: <br>
 			\[ \begin{bmatrix} 1 & 0 & t_x \\ 0 & 1 & t_y \\ 0 & 0 & 1 \end{bmatrix} \]
 			<br> <br>When multiplying a point (x, y, 1) by this matrix, it moves by (dx, dy), resulting in (x + dx, y + dy, 1).
 		</p><br>
-		<h3>Scale</h3>
+		<h3>[2] Scale</h3>
 		<b> Scales an object in 2D space without changing its shape, size or orientation. </b>
 		<p>
 			We use a scale matrix (3x3) used in homogeneous coordinates to scale the object. The scale matrix is defined as below: <br>
 			\[ \begin{bmatrix} s_x & 0 & 0 \\ 0 & s_y & 0 \\ 0 & 0 & 1 \end{bmatrix} \]
 			<br> <br>When multiplying a point (x, y, 1) by this matrix, it scales by (sx, sy), resulting in (sx * x, sy * y, 1).
 		</p><br>
-		<h3>Rotation</h3>
+		<h3>[3] Rotation</h3>
 		<b> Rotates an object in 2D space without changing its shape, size or orientation. </b>
 		<p>
 			We use a rotation matrix (3x3) used in homogeneous coordinates to rotate the object. The rotation matrix is defined as below: <br>
 			\[ \begin{bmatrix} cos(\theta) & -sin(\theta) & 0 \\ sin(\theta) & cos(\theta) & 0 \\ 0 & 0 & 1 \end{bmatrix} \]
 			<br> <br>When multiplying a point (x, y, 1) by this matrix, it rotates by \(\theta\) degrees, resulting in (x', y', 1).
 		</p><br>
-		<p> Below, we draw a red robot and give some rotational changes on its left arm. </p>
+		<h3>[4] Hierarchical Transformation</h3>
+		<p>
+			In this example, it is essential to consider the concept of <b>hierarchical transformation</b> since when the parts of the body of the robot does not work independently. We use a <I>parent-child relationship</I> when we apply the change.<br>
+			The child transformation depends on the parent's transformation, which the order of transformation always follows a matrix stack approach, which applies transformation in a hierarchical order.
+		</p>
 		<h3>Example of transformation</h3>
+		<p> Below, we draw a red robot and give some rotational changes on its left arm. </p><br>
 		<div style="display: flex; flex-direction: column; align-items: center;">
 			<table style="width: 100%; text-align: center; border-collapse: collapse;">
 			  <tr>
 				<td style="text-align: center;">
-				  <img src="../hw1/image/screenshot_2-23_21-24-8.png" width="400px"/>
+				  <img src="../hw1/image/screenshot_2-23_21-24-19.png" width="400px"/>
 				  <figcaption>transforms/robot.svg</figcaption>
 				</td>
 				<td style="text-align: center;">
-				  <img src="../hw1/image/screenshot_2-23_21-24-19.png" width="400px"/>
+				  <img src="../hw1/image/screenshot_2-23_21-24-8.png" width="400px"/>
 				  <figcaption>transforms/my_robot.svg</figcaption>
 				</td>
 			  </tr>
 			</table>
 		</div>
-		<h3>Hierarchical Transformation</h3>
-		<p>
-			In this example, it is essential to consider the concept of <b>hierarchical transformation</b> since when the parts of the body of the robot does not work independently. We use a <I>parent-child relationship</I> when we apply the change.<br>
-			The child transformation depends on the parent's transformation, which the order of transformation always follows a matrix stack approach, which applies transformation in a hierarchical order.
-		</p>
 		<p> Here in our robot, we changed the second segment of the arm to point downwards to make it hold its hand as shown in the picture.</p>
 
-		<h2>Task 4: Barycentric coordinates</h2>
-		<h3>Translation</h3>
-		<b> Moves an object in 2D space without changing its shape, size or orientation. </b>
-		<p>
-			Barycentric coordinates are a way to describe a point’s position relative to the corners of a triangle (or a tetrahedron in 3D).
-			Instead of using standard (x, y) coordinates, they express the point as a mix of the triangle’s three vertices, kind of like a weighted average.
-			The weights tell you how much influence each vertex has, if they all add up to 1 and are non-negative, the point is inside the triangle; otherwise, it’s outside.
-			This system is super useful in computer graphics and physics because it makes things like shading, interpolation, and transformations easier to handle.
-		</p>
 
 		<h2>Task 5: "Pixel sampling" for texture mapping</h2>
 		Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
