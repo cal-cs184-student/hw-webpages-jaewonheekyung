@@ -177,15 +177,94 @@
 		</div>
 		<p> Here in our robot, we changed the second segment of the arm to point downwards to make it hold its hand as shown in the picture.</p>
 
+		<h2>Task 4: Barycentric coordinates</h2>
+		<h3>[1] Barycentric Coordinates</h3>
+		<p>
+			Barycentric coordinates are a way to describe the position of a point relative to the corners of a triangle.
+			Instead of using standard (x, y) coordinates, they express the point as a mix of the triangle’s three vertices, like a weighted average.
+			The weight coefficients tell us how much influence each vertex has, if they all add up to 1 and are non-negative, the point is inside the triangle; otherwise, it is outside of the triangle.
+		</p>
+		<h3>[2] Implementation: rasterize_interpolated_color_triangle</h3>
+		<p>
+			In our rasterize_interpolated_color_triangle function, we use these barycentric weights to rasterize the triangles’ colors based off of the three colors of each vertex of the triangle.
+			We compute the weights, so called alpha, beta, and gamma, by taking the ratio of the area of a triangle between the sample point and two vertices to the total area of the triangle.
+			By doing so, we are able to compute the color based on the weights by taking color0 * alpha + color1 * beta + color2 * gamma.
+		</p>
+		<ul>
+			<li>Barycentric Weights alpha: \( alpha = area(sample_x, sample_y, x1, y1, x2, y2) / total_area \)</li>
+			<li>Barycentric Weights beta: \( beta = area(x0, y1, sample_x, sample_y, x2, y2) / total_area \)</li>
+			<li>Barycentric Weights gamma: \( gamma = 1.0 - alpha - beta \)</li>
+		</ul>
+		<div style="display: flex; flex-direction: column; align-items: center;">
+			<table style="width: 100%; text-align: center; border-collapse: collapse;">
+			  <tr>
+				<td style="text-align: center;">
+				  <img src="../hw1/image/task4.png" width="400px"/>
+				  <figcaption>transforms/robot.svg</figcaption>
+				</td>
+			  </tr>
+			</table>
+		</div>
+		<p>
+			In the image above, the triangles in the circle are all rasterized based on the barycentric interpolation colors.
+			The reason the colors vary as a gradation is because every triangle is rasterized with the colors computed with the barycentric interpolation of the three vertices.
+		</p>
 
 		<h2>Task 5: "Pixel sampling" for texture mapping</h2>
-		Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+		<h3>[1] Pixel Sampling and Texture Mapping</h3>
+		<p>
+			Texture mapping involves wrapping a 2D image onto a 3D surface by mapping texture coordinates (UV coordinates) to object coordinates.
+			Since textures do not always align perfectly with the screen’s pixel grid, pixel sampling determines how the texture is read and displayed at each pixel.
+			In the rasterize_textured_triangle function, we set every sample point’s barycentric differentials of the uv coordinates and pass them into the sample parameters.
+			Then, we invoke the sample function that samples the pixels depending on the sampling methods.
+			Here, we have two sampling functions: sample_nearest and sample_bilinear.
+		</p>
+		<div style="display: flex; flex-direction: column; align-items: center;">
+			<table style="width: 100%; text-align: center; border-collapse: collapse;">
+			  <tr>
+				<td style="text-align: center;">
+				  <img src="../hw1/image/task5-nearest1.png" width="400px"/>
+				  <figcaption>transforms/robot.svg</figcaption>
+				</td>
+				<td style="text-align: center;">
+				  <img src="../hw1/image/task5-nearest16.png" width="400px"/>
+				  <figcaption>transforms/my_robot.svg</figcaption>
+				</td>
+			  </tr>
+			</table>
+		</div>
+		<h3>[2] Nearest Neighbors</h3>
+		<p>
+			Nearest Neighbors sampling selects the nearest texture pixel (texel) of the uv coordinate of the sample point.
+			In the sample_nearest function, it returns the color of the texel that is closest to the uv coordinate.
+		</p>
+		<div style="display: flex; flex-direction: column; align-items: center;">
+			<table style="width: 100%; text-align: center; border-collapse: collapse;">
+			  <tr>
+				<td style="text-align: center;">
+				  <img src="../hw1/image/task5-bilinear1.png" width="400px"/>
+				  <figcaption>transforms/robot.svg</figcaption>
+				</td>
+				<td style="text-align: center;">
+				  <img src="../hw1/image/task5-bilinear16.png" width="400px"/>
+				  <figcaption>transforms/my_robot.svg</figcaption>
+				</td>
+			  </tr>
+			</table>
+		</div>
+		<h3>[3] Bilinear Interpolation</h3>
+		<p>
+			Bilinear Interpolation takes the four adjacent texels of the uv coordinate and operates linear interpolation within the two pairs of the texel colors.
+			Then, it takes another linear interpolation between the resultant colors of the two texel pairs.
+			That color is the final bilinear interpolated color of the sample point.
+			In the sample_bilinear function, we retrieve four adjacent texels with respect to the uv coordinate computed based on the sample point, and then take a total 3 lerps between the texels.
+		</p>
 
 		<h2>Task 6: "Level Sampling" with mipmaps for texture mapping</h2>
-		Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+		
 
 		<h2>(Optional) Task 7: Extra Credit - Draw Something Creative!</h2>
-		Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+		
 
 		<h2>Additional Notes (please remove)</h2>
 		<ul>
