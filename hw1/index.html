@@ -200,7 +200,7 @@
 			  <tr>
 				<td style="text-align: center;">
 				  <img src="../hw1/image/task4.png" width="400px"/>
-				  <figcaption>transforms/robot.svg</figcaption>
+				  <figcaption>basic/test7.svg</figcaption>
 				</td>
 			  </tr>
 			</table>
@@ -219,20 +219,6 @@
 			Then, we invoke the sample function that samples the pixels depending on the sampling methods.
 			Here, we have two sampling functions: sample_nearest and sample_bilinear.
 		</p>
-		<div style="display: flex; flex-direction: column; align-items: center;">
-			<table style="width: 100%; text-align: center; border-collapse: collapse;">
-			  <tr>
-				<td style="text-align: center;">
-				  <img src="../hw1/image/task5-nearest1.png" width="400px"/>
-				  <figcaption>transforms/robot.svg</figcaption>
-				</td>
-				<td style="text-align: center;">
-				  <img src="../hw1/image/task5-nearest16.png" width="400px"/>
-				  <figcaption>transforms/my_robot.svg</figcaption>
-				</td>
-			  </tr>
-			</table>
-		</div>
 		<h3>[2] Nearest Neighbors</h3>
 		<p>
 			Nearest Neighbors sampling selects the nearest texture pixel (texel) of the uv coordinate of the sample point.
@@ -242,12 +228,12 @@
 			<table style="width: 100%; text-align: center; border-collapse: collapse;">
 			  <tr>
 				<td style="text-align: center;">
-				  <img src="../hw1/image/task5-bilinear1.png" width="400px"/>
-				  <figcaption>transforms/robot.svg</figcaption>
+				  <img src="../hw1/image/task5-nearest1.png" width="400px"/>
+				  <figcaption>Nearest Sampling with 1 Sample</figcaption>
 				</td>
 				<td style="text-align: center;">
-				  <img src="../hw1/image/task5-bilinear16.png" width="400px"/>
-				  <figcaption>transforms/my_robot.svg</figcaption>
+				  <img src="../hw1/image/task5-nearest16.png" width="400px"/>
+				  <figcaption>Nearest Sampling with 16 Samples</figcaption>
 				</td>
 			  </tr>
 			</table>
@@ -259,23 +245,114 @@
 			That color is the final bilinear interpolated color of the sample point.
 			In the sample_bilinear function, we retrieve four adjacent texels with respect to the uv coordinate computed based on the sample point, and then take a total 3 lerps between the texels.
 		</p>
+		<div style="display: flex; flex-direction: column; align-items: center;">
+			<table style="width: 100%; text-align: center; border-collapse: collapse;">
+			  <tr>
+				<td style="text-align: center;">
+				  <img src="../hw1/image/task5-bilinear1.png" width="400px"/>
+				  <figcaption>Bilinear Sampling with 1 Sample</figcaption>
+				</td>
+				<td style="text-align: center;">
+				  <img src="../hw1/image/task5-bilinear16.png" width="400px"/>
+				  <figcaption>Bilinear Sampling with 16 Samples</figcaption>
+				</td>
+			  </tr>
+			</table>
+		</div>
 
 		<h2>Task 6: "Level Sampling" with mipmaps for texture mapping</h2>
-		
+		<h3>[1] Level Sampling</h3>
+		<p>
+			Level sampling is a method in texture mapping that helps control how textures look when objects are viewed from different distances.
+			When a 3D object is far away, its texture can appear overly detailed for the number of pixels available on the screen, leading to visual issues like jagged edges or flickering.
+			To prevent this, level sampling selects from a set of pre-scaled texture versions, known as mipmaps, which are lower-resolution copies of the original texture designed to match the viewing distance more effectively.
+		</p>
+		<h3>[2] Implementation: sample</h3>
+		<p>
+			In the sample function, we first determine the level computed by the get_level function passed by an argument of SampleParams.
+			Here, we use the following equation:
+			\[ level = log2(max(abs(sp.p_dx_uv - sp.p_uv), abs(sp.p_dy_uv - sp.p_uv))) \]
+			The sampling method is determined by the P command between P_NEAREST and P_LINEAR.
+			For the level sampling, the L command determines which level sampling method to incorporate with: zero level, nearest level, and bilinear level samplings.
+		</p>
+		<h3>[3] Zero Level Sampling</h3>
+		<p>
+			Zero level sampling merely passes in a level of 0 to the sampling method.
+		</p>
+		<div style="display: flex; flex-direction: column; align-items: center;">
+			<table style="width: 100%; text-align: center; border-collapse: collapse;">
+			  <tr>
+				<td style="text-align: center;">
+				  <img src="../hw1/image/task6-zero-nearest.png" width="400px" title="Zero Level Nearest Sampling"/>
+				  <figcaption>Zero Level Nearest Sampling</figcaption>
+				</td>
+				<td style="text-align: center;">
+				  <img src="../hw1/image/task6-zero-bilinear.png" width="400px" title="Zero Level Bilinear Sampling"/>
+				  <figcaption>Zero Level Bilinear Sampling</figcaption>
+				</td>
+			  </tr>
+			</table>
+		</div>
+		<h3>[4] Nearest Level Sampling</h3>
+		<p>
+			Nearest level sampling passes in a level that is rounded to the nearest integer.
+			The logarithmic float value will be rounded up or down based on the precision.
+			We use the nearest level as its level sampling.
+		</p>
+		<div style="display: flex; flex-direction: column; align-items: center;">
+			<table style="width: 100%; text-align: center; border-collapse: collapse;">
+			  <tr>
+				<td style="text-align: center;">
+				  <img src="../hw1/image/task6-nearest-nearest.png" width="400px" title="Nearest Level Nearest Sampling"/>
+				  <figcaption>Nearest Level Nearest Sampling</figcaption>
+				</td>
+				<td style="text-align: center;">
+				  <img src="../hw1/image/task6-nearest-bilinear.png" width="400px" title="Nearest Level Bilinear Sampling"/>
+				  <figcaption>Nearest Level Bilinear Sampling</figcaption>
+				</td>
+			  </tr>
+			</table>
+		</div>
+		<h3>[5] Bilinear Level Sampling</h3>
+		<p>
+			Bilinear level sampling computes both samples with level of floor(level) and ceil(level).
+			Then, we operate linear interpolations between the colors acquired from sampling the texels.
+			Lastly, we do another linear interpolation (lerp) on the colors generated by the two sampling methods with two different levels.
+			For bilinear level and bilinear sampling, also known as Trilinear Sampling, we do bilinear interpolation twice, which means there are 8 texels read. Also, there are total 7 linear interpolations computed.
+		</p>
+		<div style="display: flex; flex-direction: column; align-items: center;">
+			<table style="width: 100%; text-align: center; border-collapse: collapse;">
+			  <tr>
+				<td style="text-align: center;">
+				  <img src="../hw1/image/task6-bilinear-nearest.png" width="400px" title="Bilinear Level Nearest Sampling"/>
+				  <figcaption>Bilinear Level Nearest Sampling</figcaption>
+				</td>
+				<td style="text-align: center;">
+				  <img src="../hw1/image/task6-bilinear-bilinear.png" width="400px" title="Bilinear Level Bilinear Sampling"/>
+				  <figcaption>Bilinear Level Bilinear Sampling</figcaption>
+				</td>
+			  </tr>
+			</table>
+		</div>
+		<h3>[6] Tradeoffs: Speed, Memory Usage, Antialiasing Power</h3>
+		<p>
+			<b>Speed</b><br>
+			Zero level sampling is the fastest since it always grabs the highest-resolution texture, but this can slow things down when rendering distant objects.
+			Nearest level sampling is a bit slower because it picks the closest mipmap level, reducing unnecessary detail.
+			Bilinear level sampling is the slowest since it blends between two mipmap levels, making textures look smoother but requiring more processing.
+			<br><b>Memory Usage</b><br>
+			Zero level sampling uses the least memory since it only stores the original texture.
+			Nearest level sampling needs more storage for mipmaps, but they help optimize performance.
+			Bilinear level sampling takes up the most memory because it accesses multiple mipmaps at once to smooth transitions.
+			<br><b>Antialiasing Power</b><br>
+			Zero level sampling has the worst antialiasing, leading to jagged textures and shimmering.
+			Nearest level sampling helps by using mipmaps, though it can cause sudden texture shifts.
+			Bilinear level sampling is the best at reducing aliasing, blending mipmap levels for a smoother, more natural look.
+		</p>
 
 		<h2>(Optional) Task 7: Extra Credit - Draw Something Creative!</h2>
 		
 
-		<h2>Additional Notes (please remove)</h2>
-		<ul>
-			<li>You can also add code if you'd like as so: <code>code code code</code></li>
-			<li>If you'd like to add math equations, 
-				<ul>
-					<li>You can write inline equations like so: \( a^2 + b^2 = c^2 \)</li>
-					<li>You can write display equations like so: \[ a^2 + b^2 = c^2 \]</li>
-				</ul>
-			</li>
-		</ul>
 		</div>
 	</body>
 </html>
