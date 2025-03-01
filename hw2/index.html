@@ -22,6 +22,9 @@
 
 			body {
 				font-family: 'Inter', sans-serif;
+				text-align: justify;
+				line-height: 1.6;
+
 			}
 		</style>
 	</head>
@@ -48,14 +51,38 @@
 		-->
 
 		<h2>Overview</h2>
-		Give a high-level overview of what you implemented in this homework. Think about what you've built as a whole. Share your thoughts on what interesting things you've learned from completing the homework.
+		<p>
+			In this assignment, we use <b>Half-Edge</b> data structure to represent polygon meshes. Half-edge datastructure is a way to represent a mesh, adding a element called <I> half-edge </I> in addition to vertices, edges and faces. The half-edge acts like a glue to connect different mesh elements. 
+
+			<figure>
+				<img src="halfedge.png" alt="Half-Edge" style="width:50%"/>
+				<figcaption>Half-Edge Data Structure</figcaption>
+			</figure>
+			Explain twin, face, orientation, next, and vertex.
+		</p>
+
 
 		<h2>Section I: Bezier Curves and Surfaces</h2>
+		<p>
+			<b> Bezier Curves</b><br>
+			Bezier curves and surfaces are widely used in computer graphics to represent smooth curves and surfaces. Bezier curves are defined by a set of control points, and the curve itself is a linear combination of these control points. <I>(a.k.a Casteliajau's Algorithm)</I> Bezier curves are defined by a set of control points and  a curve made by Castelijau's algorithm.
+		</p>
+		<p><
+			<b> Castelijau's algorithm </b> <br>
+			Castelijau's algorithm is a <I> recursive algorithm </I> to evaluate Bezier curves. It subdivides the control points by inserting a point using linear interpolation between two control points. This process is recursively repeated until we reach a single point. The final point we reached is the point on the Bezier curve.
 
+			Given n control points \( p_1, \dots, p_n \), we use linear interpolation using lerp function, defined <br>
+			<p>
+				\( p_i' = \text{lerp}(p_i, p_{i+1}, t) = (1 - t) p_i + t p_{i+1} \)
+			</p>
+			Each call to this function will return the next set of control points \( p_1', \dots, p_{n-1}' \). We repeat this process until we reach a single point.
+		</p>
 		<h3>Part 1: Bezier curves with 1D de Casteljau subdivision</h3>
-		Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+		<p>
+			<b> Example of Bezier Curve </b>
+			Below, we have created an example of 6 control points. Each image shows the next step of Castelijau's algorithm. The final image shows the Bezier curve we created. We also added an example of changing the t parameter.
 
-		<p>Here is an example 2x2 gridlike structure using an HTML table. Each <b>tr</b> is a row and each <b>td</b> is a column in that row. You might find this useful for framing and showing your result images in an organized fashion.</p>
+		</p>
 		<div style="display: flex; flex-direction: column; align-items: center;">
 			<table style="width: 100%; text-align: center; border-collapse: collapse;">
 			  <tr>
@@ -82,7 +109,12 @@
 		</div>
 
 		<h3>Part 2: Bezier surfaces with separable 1D de Casteljau</h3>
-		Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+		<p>
+			<b> Bezier Surfaces </b> <br>
+			Bezier surface is defined in two parameters <b>u</b> and <b> v</b>. The control points are an array of nxn matrix.
+			This is the algorithm method we used. First we evaluate Bezier curve for each row of control points. Then we evlautate another Bezier curve on remaining points at v. We finally produce a single final point on the Bezier surface.
+		</p>
+		
 
 		<h2>Section II: Triangle Meshes and Half-Edge Data Structure</h2>
 
