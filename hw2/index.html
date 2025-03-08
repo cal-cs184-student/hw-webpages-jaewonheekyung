@@ -31,15 +31,15 @@
 	<body>
 		<div class="container">
 		<h1>CS184/284A Spring 2025 Homework 2 Write-Up</h1>
-		<div style="text-align: center;">Names: </div>
+		<div style="text-align: center;">Names: Jaewon Hur, Heekyung Lee </div>
 
 		<br>
 
-		Link to webpage: <a href="https://cal-cs184-student.github.io/hw-webpages-jaewonheekyung/">cs184.eecs.berkeley.edu/sp25</a>
+		Link to webpage: <a href="https://cal-cs184-student.github.io/hw-webpages-jaewonheekyung/">https://cal-cs184-student.github.io/hw-webpages-jaewonheekyung/</a>
 
 		<br>
 		
-		Link to GitHub repository: <a href="https://github.com/cal-cs184-student/sp25-hw2-kmla">cs184.eecs.berkeley.edu/sp25</a>
+		Link to GitHub repository: <a href="https://github.com/cal-cs184-student/sp25-hw2-kmla">https://github.com/cal-cs184-student/sp25-hw2-kmla</a>
 
 		<!--
 		We've already added one heading per part, to make your write-up as navigable when grading. Please fit your write-up within these sections!
@@ -158,8 +158,58 @@
 		<h2>Section II: Triangle Meshes and Half-Edge Data Structure</h2>
 		<h3>Part 3: Area-weighted vertex normals</h3>
 		<p>
-			TODOOO
+			The area-weighted vertex normal is a method of averaging the the normals of the adjacent faces of a single vertex.
+			Since the normal of a face takes into account the positions of the respective vertices, averaging these adjacent normals allow us to smoothen the mesh graphically.
+			The greater the area of a trianlge face is, the more it will be weighted on that specific face in terms of the averaged normal.
+			To compute the area-weighted vertex normal, we compute all the area normals of the faces adjacent to a given vertex and average the normals out.<br>
+			<br>The below image from the lecture depicts the area-weighted vertex normal very well.<br>
 		</p>
+			<table style="width: 100%; text-align: center; border-collapse: collapse;">
+				<tr>
+					<td style="text-align: center;">
+					  <img src="./image/part3-normals.png" width="400px"/>
+					  <figcaption><b>Figure: Area-Weighted Vertex Normal of a given vertex</b></figcaption>
+				</tr>
+			</table><br>
+		<p>
+			<b>Step 1: Iterate through the halfedges of the reference vertex.</b><br>
+			The normal vector is a cross product of two halfedges of a face.
+			In the <code>Vector3D Vertex::normal( void ) const</code> function, we set an arbitrary reference halfedge of the reference vertex by taking <code>HalfedgeCIter h = this->halfedge()</code>.
+			Then, we iterate through the halfedges by using the twin and next schematics, i.e. <code>h = h->twin()->next()</code> with respect to the vertex by setting a do-while loop terminating at a condition of <code>h != this->halfedge()</code>, where the halfedge iterator comes back to the initial halfedge instance.<br>
+			<b>Step 2: Retrieve the two halfedges of every face and compute their cross product.</b><br>
+			Inside every loop, we retrieve the two halfedges along the triangle face to compute their cross product. Here, we take advantage of the Halfedge data structure using the <code>next()</code> and <code>twin()</code> members.
+			The twin halfedge is <code>HalfedgeCIter h_twin = h->twin()</code>, and the twin of the next halfedge is <code>HalfedgeCIter h_next_twin = h->next()->twin()</code>.
+			Now, we have the two halfedges of an adjacent face, we get the 3D vector positions of the two halfedges - <code>Vector3D v1 = h_twin->position</code> and <code>Vector3D v2 = h_next_twin->position</code> -
+			and invoke the built-in <code>inline Vector3D cross( const Vector3D& u, const Vector3D& v )</code> function, passing in the two Vector3D objects.<br>
+			<b>Step 3: Add all the vector normals and normalize the sum vector.</b><br>
+			Lastly, we add up all the Vector3D instances stored in a vector/list/set using the <code>+ operator</code> built-in in the Vector3D class. Also, we use the <code>unit()</code> function in the Vector3D class that returns the normalized vector.
+			Return the normalized sum of the area-weighted normals of a vertex.
+		</p>
+		<p>
+			<b>Comparison between the teapot shading with and without the vertex normals.</b><br>
+			<b>(1) Default Flat Shading</b><br>
+		</p>
+			<table style="width: 100%; text-align: center; border-collapse: collapse;">
+				<tr>
+					<td style="text-align: center;">
+					  <img src="./image/part3-teapot-before.png" width="400px"/>
+					  <figcaption><b>Figure: Default Flat Shaded Tea Pot</b></figcaption>
+				</tr>
+			</table>
+		<p>
+			<b>(2) Phong Shading</b><br>
+		</p>
+		<table style="width: 100%; text-align: center; border-collapse: collapse;">
+			<tr>
+				<td style="text-align: center;">
+				  <img src="./image/part3-teapot-after.png" width="400px"/>
+				  <figcaption><b>Figure: Phong Shaded Tea Pot</b></figcaption>
+			</tr>
+		</table>
+		<p>
+			As shown in the two images, taking the area-weighted vertex normals smoothens the mesh surface.
+			The advantages of using the area-weighted vertex normals come from reducing the distortion coming from the realtively smaller faces and improving the smootheness of a mesh.
+		</p><br>
 
 		<h3>Part 4: Edge flip</h3>
 		To modify a mesh, there are several methods, and one of them is <b>flipping</b> the edge. The important part is that we have to maintain the structure of the Half-edge structure consistent, ensuring every pointer is assigne correctly. <br>
@@ -240,15 +290,217 @@
 				<figcaption>Teapot after Edge split</figcaption>
 			  </td>
 			</tr>
-		</table>
-
+		</table><br>
 		
 		<h3>Part 6: Loop subdivision for mesh upsampling</h3>
-		Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+		<h4>Implementation</h4>
+		<p>
+			4-1 Loop Subdivision consists of four major sections:
+			(1) Computing the new positions of the Vertices and Edges based on the weights and degree,
+			(2) Splitting the original Edges,
+			(3) Flipping the newly splitting Edges with old-new vertices, and
+			(4) Reassigning and resetting the positions and flags for multi-layer subdivision.
+		</p>
+		<p>
+			<b>Step 1: The new positions of each Vertex and Edge</b><br>
+		</p>
+		<table style="width: 100%; text-align: center; border-collapse: collapse;">
+			<tr>
+			  <td style="text-align: center;">
+				<img src="./image/part6-positions.png" width="400px"/>
+				<figcaption><b>Figure: The new positions of the new Vertex and the old Vertex</b></figcaption>
+			  </td>
+			</tr>
+		</table>
+		<p>
+			After the loop subdivision, since there will be more faces and edges created on the mesh, every vertex should have a new position to make the mesh smoother by its subdivided faces.
+			This new position will be computed all prior to splitting and flipping. We iterate through all the vertices using a while loop starting from <code>mesh.verticesBegin()</code> to <code>mesh.verticesEnd()</code>.
+			Inside every loop, we again make a nested do-while loop that iterated through all the halfedges of the reference vertex to retrieve all the positions of the adjacent (neighbor) vertices.
+			This process is necessary to compute the weighted position of the newPosition of the vertex according to the formula given:
+			<code>Vector3D new_position = (1 - n * u) * old_position + u * original_neighbor_position_sum;</code> where n is the degree of the reference vertex, u is 3/16 if n is equal to 3 or 3/(8*n) otherwise, old_position is the position of the vertex,
+			and the original_neighbor_position_sum is the sum of the <code>Vector3D position</code>'s of the adjacent vertices we are traversing through the inner loop.
+			Then, we can temporarily store the newly computed position of the vertex, which will be the new position after operating the entire 4-1 loop subdivision, inside the <code>Vertex::newPosition</code> Vector3D member.
+			These are the new positions of the old vertices of the entire mesh. What about the newly created vertices after splitting the edges?
+		</p>
+		<p>
+			If we split an edge, there will be a new Vertex created on the Edge that will be splitted. The new position of the newly allocated vertex will be stored in the <code>Edge::newPosition</code> of the Edge instance.
+			The formula of this new position is as follows: <code>3.0/8.0 * (a->position + b->position) + 1.0/8.0 * (c->position + d->position)</code> where a and b are the vertices of the edge we are splitting and c and d are the neighbor vertices of the parallelogram (refer to the above image).
+			Implementation-wise, we iterate through all the edges of the entire mesh by setting an edge iterator and a while loop from <code>mesh.edgesBegin()</code> to <code>mesh.edgesEnd()</code>.
+			Inside each loop, we get the four vertices a, b, c, and d and retrieve their Vector3D positions. These positions will be used as weighting them by 3/8 or 1/8 depending on their locations.
+			These are the new positions of the new vertices created by splitting the edges.<br>
+			<b>These new position computations are all done prior to splitting and flipping!</b>
+		</p>
+		<p>
+			<b>Step 2: Split the original Edges</b>
+		</p>
+		<table style="width: 100%; text-align: center; border-collapse: collapse;">
+			<tr>
+			  <td style="text-align: center;">
+				<img src="./image/part6-splitting.png" width="400px"/>
+				<figcaption><b>Figure: Splitting the Original Edges</b></figcaption>
+			  </td>
+			</tr>
+		</table>
+		<p>
+			Splitting the edges are done in two layers of logic: first, retrieve the original edges of the mesh; second, only split the original edges.
+			Here, "original edges" mean the edges that appertains to the original mesh before doing any splitting or flipping. In the above image, all the black edges before splitting are the original edges.
+			We first iterate through all the edges of the mesh and retrieve the EdgeIter instances by storing these iterators in a vector/list/set. Besides retrieving these information, we do not split any edges yet.
+			We do so because while we split the edges of the mesh, there will be new edges created after invoking the <code>HalfedgeMesh::splitEdge</code> function. If we do not separate these original and new edges,
+			then the loop will end up being trapped in an infinite iteration splitting every edge inside the mesh including the new edges.<br>
+			After retrieving the original edges, we now split these edges.
+			Here, instead of iterating through the entire edges of the mesh, we only loop through the original edges we have retrieved earlier using a for loop: (pseudocode) <code>for (int i = 0; i to original_edges.size(); i++) {}</code>.
+			By doing so, we are able to split only the original edges, obtaining the image above after-splitting with the blue edges created.
+		</p>
+		<p>
+			<b>Step 3: Flip the new Edges with old-new vertices pair</b>
+		</p>
+		<table style="width: 100%; text-align: center; border-collapse: collapse;">
+			<tr>
+			  <td style="text-align: center;">
+				<img src="./image/part6-flipping.png" width="400px"/>
+				<figcaption><b>Figure: Flipping the New Edges with Old-New Vertices Pair</b></figcaption>
+			  </td>
+			</tr>
+		</table>
+		<p>
+			After splitting the original edges, we now have to split the edges. Among the blue edges from the image above, we want to flip only the edges that split the edge and the face first to make a 4-1 triangle partitions.
+			Meaning, the edges to be flipped should be limited to ones that are (1) new edges created by splitting, and (2) connect an old vertex and a new vertex.
+			Inside the while loop iterating through all the edges of the mesh, we check the conditions of <code>if (edge_iter3->isNew)</code> and <code>if ((p0->isNew && !p1->isNew) || (!p0->isNew && p1->isNew))</code>.
+			By doing so, we are able to filter out the edges to be flipped and form the 4-1 subdivided faces.
+		</p>
+		<p>
+			<b>Step 4: Reassigning the positions of vertices and resetting the isNew flags</b>
+		</p>
+		<p>
+			Since we have updated the entire mesh with 4-1 subdivided faces, edges, and vertices, we should assign the vertices' positions to the newly computed positions.
+			Every vertex object holds two members: <code>Vector3D position</code> and <code>Vector3D newPosition</code>. The <code>Vertex::newPosition</code> vectors are all pre-computed before splitting and flipping.
+			We can merely assign the <code>Vertex::position</code> to <code>Vertex::newPosition</code> by iterating through all the vertices of the mesh.
+			Again, we use a while loop iterating from <code>mesh.verticesBegin()</code> to <code>mesh.verticesEnd()</code>, and re-assign the <code>v->position = v->newPosition</code>.
+			After reassigning the Vertex positions, now, we have to reset the <code>Edge::isNew</code> flags.
+			This process is necessary because after one layer of loop subdivision, we would want to operate higher level loop subdivision based on the output from the previous layer of subdividing.
+			By resetting every Edge instances' <code>Edge::isNew</code> boolean back to false, the rest of the logic would perceive the newly subdivided edges as a pre-existing edge as if they were to be the original edges of the mesh.
+			This resetting logic is also done in a while loop iterating from <code>mesh.edgesBegin()</code> to <code>mesh.edgesEnd()</code>.
+		</p>
+		<h4>Observations</h4>
+		<table style="width: 100%; text-align: center; border-collapse: collapse;">
+			<tr>
+			  <td style="text-align: center;">
+				<img src="./image/part6-torus1.png" width="300px"/>
+				<figcaption><b>(0) Torus before Loop Subdivision</b></figcaption>
+			  </td>
+			</tr>
+		</table><br>
+		<table style="width: 100%; text-align: center; border-collapse: collapse;">
+			<tr>
+			  <td style="text-align: center;">
+				<img src="./image/part6-torus2.png" width="300px"/>
+				<figcaption><b>(i) Torus Loop Subdivision Once</b></figcaption>
+			  </td>
+			  <td style="text-align: center;">
+				<img src="./image/part6-torus3.png" width="300px"/>
+				<figcaption><b>(ii) Torus Loop Subdivision Twice</b></figcaption>
+			  </td>
+			</tr>
+		</table><br>
+		<table style="width: 100%; text-align: center; border-collapse: collapse;">
+			<tr>
+			  <td style="text-align: center;">
+				<img src="./image/part6-torus4.png" width="300px"/>
+				<figcaption><b>(iii) Torus Loop Subdivision Three Times</b></figcaption>
+			  </td>
+			  <td style="text-align: center;">
+				<img src="./image/part6-torus5.png" width="300px"/>
+				<figcaption><b>(iv) Torus Loop Subdivision Four Times</b></figcaption>
+			  </td>
+			</tr>
+		</table><br>
+		<p>
+			<b>Q. How do meshes behave after loop subdivision. What happens to sharp corners and edges?</b><br>
+			<b>Answer: </b>After loop subdivision, the meshed become smoother in terms of the surface texture.
+			As observed from the four figures above, a torus had sharp edges and corners before operating loop subdivision.
+			However, as more layers of loop subdivision are applied to it (from (i) to (iv)), the angle of each corner becomes more and more obtuse.
+			The more loop subdivision we apply to the mesh, the smoother the corner and edges become.
+			The contrast between the figures in (i), (ii), (iii), and (iv) becomes gradually clearer as the layer of subdivision becomes more complex.
+			<br><b>Q. Can you reduce this effect by pre-splitting some edges?</b><br>
+			<b>Answer: </b>One way to prevent the sharp edges and corners being smoothened is to pre-split the target area before apply the loop subdivision.
+			Pre-splitting adds more smaller faces and edges to the mesh, which will diminish the effect of averaging the neighbor vertices' positions.
+			Since adding more neighbor vertices may diminish the averaging of the position of a vertex, the less smoothened the sharp part of the mesh would be.
+		</p>
 
+		<h4>Repeated Subdivisions</h4>
+		<table style="width: 100%; text-align: center; border-collapse: collapse;">
+			<tr>
+			  <td style="text-align: center;">
+				<img src="./image/part6-cube0.png" width="300px"/>
+				<figcaption><b>(0) Cube before Loop Subdivision</b></figcaption>
+			  </td>
+			</tr>
+		</table><br>
+		<table style="width: 100%; text-align: center; border-collapse: collapse;">
+			<tr>
+			  <td style="text-align: center;">
+				<img src="./image/part6-cube1.png" width="300px"/>
+				<figcaption><b>(i) Cube Loop Subdivision Once</b></figcaption>
+			  </td>
+			  <td style="text-align: center;">
+				<img src="./image/part6-cube2.png" width="300px"/>
+				<figcaption><b>(ii) Cube Loop Subdivision Twice</b></figcaption>
+			  </td>
+			</tr>
+		</table><br>
+		<table style="width: 100%; text-align: center; border-collapse: collapse;">
+			<tr>
+			  <td style="text-align: center;">
+				<img src="./image/part6-cube3.png" width="300px"/>
+				<figcaption><b>(iii) Cube Loop Subdivision Three Times</b></figcaption>
+			  </td>
+			  <td style="text-align: center;">
+				<img src="./image/part6-cube4.png" width="300px"/>
+				<figcaption><b>(iv) Cube Loop Subdivision Four Times</b></figcaption>
+			  </td>
+			</tr>
+		</table><br>
+		<p>
+			<b>Asymmetric Effects and why they occur</b><br>
+			Observing the layers of operating loop subdivision, the output mesh has an asymmetric structure.
+			In the transition from figure (iii) to (iv), it becomes clear that there exists a certin edge and corner of the sphere-like cubic structure that could not be smoothened by loop subdividing.
+			This is a typical side-effect of loop subdivision, since loop subdivision is highly dependent on the neighboring vertices.
+			As stated earlier, the extent of how loop subdivision smoothens a mesh depends on the number of neighboring vertices and the degree of each vertex.
+			In the cube's example, <b>not all 8 vertices have an equal degree of neighboring vertices</b>. This discrepancy in the degree contributes to the asymmetricity of the cube after applying layers of loop subdivision.
+			<br>
+			<table style="width: 100%; text-align: center; border-collapse: collapse;">
+				<tr>
+				  <td style="text-align: center;">
+					<img src="./image/part6-asym1.png" width="300px"/>
+					<figcaption><b>A Vertex of the Cube with Degree of 6</b></figcaption>
+				  </td>
+				  <td style="text-align: center;">
+					<img src="./image/part6-asym2.png" width="300px"/>
+					<figcaption><b>A Vertex of the Cube with Degree of 4</b></figcaption>
+				  </td>
+				</tr>
+			</table>
+			In the <code>MeshResampler::upsample</code> function, the <code>Vertex::newPosition</code> of each vertex is computed by <code>(1 - n * u) * old_position + u * original_neighbor_position_sum</code>
+			where this formula averages the neighbor vertices' positions.
+			Hence, it is significant to balancing the degree of every vertex of the mesh in order to make a symmetric mesh after multiple loop subdivisions.<br>
+			<b>Pre-processing the Cube</b><br>
+			We pre-processed the cube to make all 8 vertices have the same degree of 6 by splitting the edges. Then, the output mesh became symmetric.
+			<table style="width: 100%; text-align: center; border-collapse: collapse;">
+				<tr>
+				  <td style="text-align: center;">
+					<img src="./image/part6-sym1.png" width="300px"/>
+					<figcaption><b>Vertices of the Cube with Degree of 6</b></figcaption>
+				  </td>
+				  <td style="text-align: center;">
+					<img src="./image/part6-sym2.png" width="300px"/>
+					<figcaption><b>Output</b></figcaption>
+				  </td>
+				</tr>
+			</table>
+		</p><br>
+		
+		<br>
 		<h2>(Optional) Section III: Potential Extra Credit - Art Competition: Model something Creative</h2>
-		Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
-
 		</div>
 	</body>
 </html>
