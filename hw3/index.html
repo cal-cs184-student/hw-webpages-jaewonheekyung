@@ -80,7 +80,99 @@
 		Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
 
 		<h2>Part 3: Direct Illumination</h2>
-		Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+		<p>
+			In Part 3, we begin simulating realistic light transport in the scene by modifying the 
+			<code>est_radiance_global_illumination</code> function in <code>pathtracer.cpp</code>, which initially returns a debug color based on surface normals. 
+			The Bidirectional Scattering Distribution Function (BSDF) encodes how surfaces interact with light. Here, we primarily work with <b>Diffuse BSDFs</b>, which model ideal Lambertian surfaces that <b>scatter light evenly</b> in all directions. 
+			The BSDF determines how much light is reflected or transmitted from an incident direction to an outgoing direction, allowing for <b>more realistic shading</b>.
+		</p>
+		
+		<h3>Shading Methods for Direct Illumination</h3>
+		<p>We implement two shading methods for direct illumination: <b>Uniform Hemisphere Sampling</b> and <b>Importance Sampling</b>. Both methods use <b>Monte Carlo integration</b> to approximate the rendering equation, but they differ in efficiency and convergence speed.</p>
+		
+		<h3>Uniform Hemisphere Sampling</h3>
+		<p>
+			In this method, we randomly sample directions over the hemisphere around the surface normal. For each sampled direction, we cast a <b>shadow ray</b> to check whether the light is visible from the intersection point. 
+			If the shadow ray reaches a light source, we calculate the radiance contribution based on the <b>BSDF and the cosine-weighted term</b>. 
+			This method follows <b>Monte Carlo integration</b>, where the average contribution of multiple random samples approximates the true lighting. However, it is <b>inefficient</b> because many sampled directions may not point toward light sources, leading to high variance and noisy shadows.
+		</p>
+		
+		<h3>Importance Sampling</h3>
+		<p>
+			Instead of randomly sampling directions, <b>importance sampling</b> chooses directions that are <b>more likely to contribute to illumination</b>. 
+			Specifically, we sample based on the cosine-weighted distribution of the surface normal and prioritize directions toward known light sources. 
+			This significantly <b>reduces variance</b> and produces <b>smoother shadows with fewer samples</b>, making it a more efficient approach compared to hemisphere sampling.
+		</p>
+		
+		<h3>Rendering Examples for Uniform Hemisphere Sampling</h3>
+		<p>
+			Below are rendering results using Uniform Hemisphere Sampling. We rendered the images for both Uniform Hemisphere Sampling and Importance Sampling to compare their effectiveness.
+		</p>
+		
+		<p><b>Uniform Hemisphere Sampling</b></p>
+		<div style="display: flex; flex-direction: column; align-items: center;">
+			<table style="width: 100%; text-align: center; border-collapse: collapse;">
+				<tr>
+					<td style="text-align: center;">
+						<img src="./images/hemisphere_16_8.png" width="300px"/>
+						<figcaption>Sample rate 16, light samples 8</figcaption>
+					</td>
+					<td style="text-align: center;">
+						<img src="./images/hemisphere_64_32.png" width="300px"/>
+						<figcaption>Sample rate 64, light samples 32</figcaption>
+					</td>
+				</tr>
+			</table>
+		</div>
+		<p><b>Note:</b> The first image took <b>3.45 seconds</b> to render but appears noisy, while the second image took <b>44 seconds</b> but resulted in higher-quality shadows.</p>
+		
+		<p><b>Importance Sampling</b></p>
+		<div style="display: flex; flex-direction: column; align-items: center;">
+			<table style="width: 100%; text-align: center; border-collapse: collapse;">
+				<tr>
+					<td style="text-align: center;">
+						<img src="./images/importance_1_1.png" width="300px"/>
+						<figcaption>Sample rate 1, light samples 1</figcaption>
+					</td>
+					<td style="text-align: center;">
+						<img src="./images/importance_1_4.png" width="300px"/>
+						<figcaption>Sample rate 1, light samples 4</figcaption>
+					</td>
+				</tr>
+				<tr>
+					<td style="text-align: center;">
+						<img src="./images/importance_1_16.png" width="300px"/>
+						<figcaption>Sample rate 1, light samples 16</figcaption>
+					</td>
+					<td style="text-align: center;">
+						<img src="./images/importance_1_64.png" width="300px"/>
+						<figcaption>Sample rate 1, light samples 64</figcaption>
+					</td>
+				</tr>
+			</table>
+		</div>
+		<p>
+			<b> Note: </b>We also measured the rendering time for importance sampling at different light sample values:
+			<ul>
+				<li><b>-l 1</b>: 0.0346 seconds</li>
+				<li><b>-l 4</b>: 0.1223 seconds</li>
+				<li><b>-l 16</b>: 0.3355 seconds</li>
+				<li><b>-l 64</b>: 1.5118 seconds</li>
+			</ul>
+			The results show that increasing the number of light samples significantly improves the quality of shadows but also increases rendering time. However, the rendering time is still better than uniform hemisphere sampling, especially at lower sample counts.
+		</p>
+		<p><b>Analysis of Importance Sampling</b><p>
+			<p>
+				By increasing the number of light samples (<code>-l</code>), we observe a <b>significant reduction in noise</b> in soft shadows. 
+				When using <code>-l 1</code>, the shadows appear highly <b>noisy and grainy</b>, while increasing to <code>-l 64</code> results in <b>smooth and realistic</b> soft shadows. 
+				Importance sampling reduces variance by <b>choosing more relevant sample directions</b>, leading to <b>faster convergence</b> compared to uniform hemisphere sampling.
+			</p><br>
+		
+		<h3>Final Comparison Between Hemisphere and Importance Sampling</h3>
+		<p>
+			When comparing <b>uniform hemisphere sampling</b> and <b>importance sampling</b>, we find that importance sampling <b>produces less noise</b> in soft shadows with fewer samples. The hemisphere method wastes many samples on directions that do not contribute to illumination, making it less efficient. The  importance sampling directs rays toward known light sources, reducing variance and leading to smoother shading. As our results show that importance sampling is more reasonale for rendering soft shadows.
+		</p>
+
 
 		<h2>Part 4: Global Illumination</h2>
 		Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
