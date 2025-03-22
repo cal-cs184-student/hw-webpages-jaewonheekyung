@@ -85,7 +85,7 @@
 			<code>est_radiance_global_illumination</code> function in <code>pathtracer.cpp</code>, which initially returns a debug color based on surface normals. 
 			The Bidirectional Scattering Distribution Function (BSDF) encodes how surfaces interact with light. Here, we primarily work with <b>Diffuse BSDFs</b>, which model ideal Lambertian surfaces that <b>scatter light evenly</b> in all directions. 
 			The BSDF determines how much light is reflected or transmitted from an incident direction to an outgoing direction, allowing for <b>more realistic shading</b>.
-		</p>
+		</p><br>
 		
 		<h3>Shading Methods for Direct Illumination</h3>
 		<p>We implement two shading methods for direct illumination: <b>Uniform Hemisphere Sampling</b> and <b>Importance Sampling</b>. Both methods use <b>Monte Carlo integration</b> to approximate the rendering equation, but they differ in efficiency and convergence speed.</p>
@@ -95,14 +95,14 @@
 			In this method, we randomly sample directions over the hemisphere around the surface normal. For each sampled direction, we cast a <b>shadow ray</b> to check whether the light is visible from the intersection point. 
 			If the shadow ray reaches a light source, we calculate the radiance contribution based on the <b>BSDF and the cosine-weighted term</b>. 
 			This method follows <b>Monte Carlo integration</b>, where the average contribution of multiple random samples approximates the true lighting. However, it is <b>inefficient</b> because many sampled directions may not point toward light sources, leading to high variance and noisy shadows.
-		</p>
+		</p> <br>
 		
 		<h3>Importance Sampling</h3>
 		<p>
 			Instead of randomly sampling directions, <b>importance sampling</b> chooses directions that are <b>more likely to contribute to illumination</b>. 
 			Specifically, we sample based on the cosine-weighted distribution of the surface normal and prioritize directions toward known light sources. 
 			This significantly <b>reduces variance</b> and produces <b>smoother shadows with fewer samples</b>, making it a more efficient approach compared to hemisphere sampling.
-		</p>
+		</p><br>
 		
 		<h3>Rendering Examples for Uniform Hemisphere Sampling</h3>
 		<p>
@@ -174,8 +174,161 @@
 		</p>
 
 
-		<h2>Part 4: Global Illumination</h2>
-		Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+		<h2>Part 4: Indirect Illumination</h2>
+		<p>
+			In this part, we extend our path tracing implementation to handle <b>global illumination</b>, which includes both 
+			<b>direct</b> and <b>indirect</b> lighting. The core function for this is <code>at_least_one_bounce_radiance</code>, 
+			which builds upon direct illumination by recursively tracing rays to capture light bouncing off surfaces. 
+		</p><br>
+		<h3> Walk through the implementation</h3>
+		<p>
+			First, we compute <b>one-bounce radiance</b> using direct lighting methods (<b>importance sampling</b> or <b>hemisphere sampling</b>). 
+			Then, for <b>indirect illumination</b>, we sample a new ray direction based on the <b>BSDF</b> at the intersection point, 
+			cast a new ray, and recursively compute the radiance from that new intersection. 
+		</p>
+		<p>
+			To optimize performance, we incorporate <b>Russian Roulette termination</b>, which probabilistically stops ray recursion after a certain depth, 
+			preventing unnecessary computations for rays that contribute little to the final image. 
+			This method allows us to realistically capture <b>inter-reflections</b> and <b>soft color bleeding</b>, which rasterization cannot achieve. 
+		</p>
+		<p>
+			To visualize indirect lighting effects, we compare rendered images with <b>only direct illumination</b> versus <b>only indirect illumination</b>, 
+			as well as cumulative bounces up to a maximum depth. Finally, we analyze the effects of <b>sample-per-pixel rates</b>, 
+			showing how increasing sample counts leads to <b>smoother and more accurate results</b>.
+		</p><br>
+		<h3> Examples rendered with global (direct + indirect) lightning function </h3>
+
+		<div style="display: flex; flex-direction: column; align-items: center;">
+			<table style="width: 100%; text-align: center; border-collapse: collapse;">
+				<tr>
+					<td style="text-align: center;">
+						<img src="./images/global_illumination_CBbunny.png" width="300px"/>
+						<figcaption>Global Illumination_CBbunny</figcaption>
+					</td>
+					<td style="text-align: center;">
+						<img src="./images/global_illumination_CBspheres.png" width="300px"/>
+						<figcaption>Global Illumination_CBspheres </figcaption>
+					</td>
+				</tr>
+			</table>
+		<h3> Examples with only direct illumination vs only indirect illumination </h3>
+		<div style="display: flex; flex-direction: column; align-items: center;">
+			<table style="width: 100%; text-align: center; border-collapse: collapse;">
+				<tr>
+					<td style="text-align: center;">
+						<img src="./images/direct_illumination.png" width="300px"/>
+						<figcaption>Only Direct Illumination</figcaption>
+					</td>
+					<td style="text-align: center;">
+						<img src="./images/indirect_illumination.png" width="300px"/>
+						<figcaption>Only Indirect Illumination</figcaption>
+					</td>
+				</tr>
+			</table>
+		</div>
+		<p> Both the pictures were rendered in 1024 samples per pixel, 16 ligth samples per intersection, and max depth 5. Here, with only direct illumination, it only returns only <code> one_bounce_radiance(r,isect)</code>. On the other hand, for only indirect illumination, it removes <code> one_bounce_radiance() </code> when we compute only recursive bounces.</p>
+
+		<h3> Results for different max detphs, and AccumBounces </h3>
+		<p>
+			We rendered images with different <b>max depths</b> and <b>accumulative bounces</b> to analyze the effects of recursive ray tracing. 
+		</p>
+		<div style="display: flex; flex-direction: column; align-items: center;">
+			<table style="width: 100%; text-align: center; border-collapse: collapse;">
+				<tr>
+					<td style="text-align: center;">
+						<img src="./images/CBbunny_accum_0.png" width="200px"/>
+						<figcaption>m=0</figcaption>
+					</td>
+					<td style="text-align: center;">
+						<img src="./images/CBbunny_accum_1.png" width="200px"/>
+						<figcaption>m=1</figcaption>
+					</td>
+					<td style="text-align: center;">
+						<img src="./images/CBbunny_accum_2.png" width="200px"/>
+						<figcaption>m=2</figcaption>
+					</td>
+					<td style="text-align: center;">
+						<img src="./images/CBbunny_accum_3.png" width="200px"/>
+						<figcaption>m=3</figcaption>
+					</td>
+					<td style="text-align: center;">
+						<img src="./images/CBbunny_accum_4.png" width="200px"/>
+						<figcaption>m=4</figcaption>
+					</td>
+					<td style="text-align: center;">
+						<img src="./images/CBbunny_accum_5.png" width="200px"/>
+						<figcaption>m=5</figcaption>
+					</td>
+				</tr>
+			</table>
+		</div>
+		<div style="display: flex; flex-direction: column; align-items: center;">
+			<table style="width: 100%; text-align: center; border-collapse: collapse;">
+				<tr>
+					<td style="text-align: center;">
+						<img src="./images/CBbunny_noaccum_0.png" width="200px"/>
+						<figcaption>No Accum m=0</figcaption>
+					</td>
+					<td style="text-align: center;">
+						<img src="./images/CBbunny_noaccum_1.png" width="200px"/>
+						<figcaption>m=1</figcaption>
+					</td>
+					<td style="text-align: center;">
+						<img src="./images/CBbunny_noaccum_2.png" width="200px"/>
+						<figcaption>m=2</figcaption>
+					</td>
+					<td style="text-align: center;">
+						<img src="./images/CBbunny_noaccum_3.png" width="200px"/>
+						<figcaption>m=3</figcaption>
+					</td>
+					<td style="text-align: center;">
+						<img src="./images/CBbunny_noaccum_4.png" width="200px"/>
+						<figcaption>m=4</figcaption>
+					</td>
+					<td style="text-align: center;">
+						<img src="./images/CBbunny_noaccum_5.png" width="200px"/>
+						<figcaption>m=5</figcaption>
+					</td>
+				</tr>
+			</table>
+		</div>
+		<p><b> Analysis for </b></p>
+
+		<h3> Results for Russian Roulette redering for different max depth </h3>
+		<p>
+			We rendered images with different <b>max depths</b> and <b>Russian Roulette</b> to analyze the effects of recursive ray tracing.
+		</p>
+		<div style="display: flex; flex-direction: column; align-items: center;">
+			<table style="width: 100%; text-align: center; border-collapse: collapse;">
+				<tr>
+					<td style="text-align: center;">
+						<img src="./images/CBbunny_russian_0.png" width="200px"/>
+						<figcaption>m=0</figcaption>
+					</td>
+					<td style="text-align: center;">
+						<img src="./images/CBbunny_russian_1.png" width="200px"/>
+						<figcaption>m=1</figcaption>
+					</td>
+					<td style="text-align: center;">
+						<img src="./images/CBbunny_russian_3.png" width="200px"/>
+						<figcaption>m=2</figcaption>
+					</td>
+					<td style="text-align: center;">
+						<img src="./images/CBbunny_russian_4.png" width="200px"/>
+						<figcaption>m=3</figcaption>
+					</td>
+					<td style="text-align: center;">
+						<img src="./images/CBbunny_russian_5.png" width="200px"/>
+						<figcaption>m=4</figcaption>
+					</td>
+					<td style="text-align: center;">
+						<img src="./images/CBbunny_russian_100.png" width="200px"/>
+						<figcaption>m=100</figcaption>
+					</td>
+				</tr>
+			</table>
+		</div>
+
 
 		<h2>Part 5: Adaptive Sampling</h2>
 		Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
