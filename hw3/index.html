@@ -232,6 +232,7 @@
 		<p>
 			We rendered images with different <b>max depths</b> and <b>accumulative bounces</b> to analyze the effects of recursive ray tracing. 
 		</p>
+		<p>AccumBounces == true</p>
 		<div style="display: flex; flex-direction: column; align-items: center;">
 			<table style="width: 100%; text-align: center; border-collapse: collapse;">
 				<tr>
@@ -262,6 +263,7 @@
 				</tr>
 			</table>
 		</div>
+		<p>AccumBounces == false</p>
 		<div style="display: flex; flex-direction: column; align-items: center;">
 			<table style="width: 100%; text-align: center; border-collapse: collapse;">
 				<tr>
@@ -329,6 +331,43 @@
 			</table>
 		</div>
 
+		<h3> Compared rendered views for various sample-per-pixel rates </h3>
+		<p> We use 4 light rays for this example </p>
+		<div style="display: flex; flex-direction: column; align-items: center;">
+			<table style="width: 100%; text-align: center; border-collapse: collapse;">
+				<tr>
+					<td style="text-align: center;">
+						<img src="./images/CBbunny_s1.png" width="180px"/>
+						<figcaption>sample rate =1</figcaption>
+					</td>
+					<td style="text-align: center;">
+						<img src="./images/CBbunny_s2.png" width="180px"/>
+						<figcaption>sample rate =2</figcaption>
+					</td>
+					<td style="text-align: center;">
+						<img src="./images/CBbunny_s4.png" width="180px"/>
+						<figcaption>sample rate =4</figcaption>
+					</td>
+					<td style="text-align: center;">
+						<img src="./images/CBbunny_s8.png" width="180px"/>
+						<figcaption>sample rate =8</figcaption>
+					</td>
+					<td style="text-align: center;">
+						<img src="./images/CBbunny_s16.png" width="180px"/>
+						<figcaption>sample rate =16</figcaption>
+					</td>
+					<td style="text-align: center;">
+						<img src="./images/CBbunny_s64.png" width="180px"/>
+						<figcaption>sample rate =64</figcaption>
+					</td>
+					<td style="text-align: center;">
+						<img src="./images/CBbunny_s1024.png" width="180px"/>
+						<figcaption>sample rate =1024</figcaption>
+					</td>
+				</tr>
+			</table>
+		</div>
+		<p> From the result, we can see that as we increase the sample rate, the image becomes less noisy, with high quality. </p>
 
 		<h2>Part 5: Adaptive Sampling</h2>
 		Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
