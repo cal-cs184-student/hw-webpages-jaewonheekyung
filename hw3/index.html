@@ -28,17 +28,12 @@
 	<body>
 		<div class="container">
 		<h1>CS184/284A Spring 2025 Homework 3 Write-Up</h1>
-		<div style="text-align: center;">Names: </div>
+		<div style="text-align: center;">Names: Heekyung Lee, Jaewon Hur</div>
 
 		<br>
 
 		Link to webpage: (TODO) <a href="https://cs184.eecs.berkeley.edu/sp25">cs184.eecs.berkeley.edu/sp25</a>
 		Link to GitHub repository: (TODO) <a href="https://cs184.eecs.berkeley.edu/sp25">cs184.eecs.berkeley.edu/sp25</a>
-		
-		<figure>
-			<img src="cornell.png" alt="Cornell Boxes with Bunnies" style="width:70%"/>
-			<figcaption>You can add images with captions!</figcaption>
-		</figure>
 
 		<!--
 		We've already added one heading per part, to make your write-up as navigable when grading. Please fit your write-up within these sections!
@@ -211,6 +206,7 @@
 					</td>
 				</tr>
 			</table>
+		</div>
 		<h3> Examples with only direct illumination vs only indirect illumination </h3>
 		<div style="display: flex; flex-direction: column; align-items: center;">
 			<table style="width: 100%; text-align: center; border-collapse: collapse;">
@@ -294,7 +290,13 @@
 				</tr>
 			</table>
 		</div>
-		<p><b> Analysis for </b></p>
+		<p><b> Analysis for 2nd and 3rd bounce of light</b></p>
+		<p>
+			For the <b>2nd and 3rd bounce of light</b>, we can see the indirect lighting effects. From the <b>2nd bounce</b>, we see more descriptive colors in the image. The <b>3rd bounce</b> further refines this effect, distributing light more naturally. It improves the scene brightness in shadowed areas too. Compared to rasterization, which only has direct illumination, these higher-order bounces make a more physically accurate representation of images on how light interact with surfaces. This significantly improves the scene to be more realistic.
+		</p>
+
+		<p><b> Compare Rendered views for isAccumBounces == False and True</b></p>
+		When <code>isAccumBounces == true </code>, we see that the image becomes more realisitc as the max depth increases. However, when <code>isAccumBounces == false</code>, the image becomes more noisy as the max depth increases. This is because when <code>isAccumBounces == true</code>, the image accumulates the bounces of light. However, when <code>isAccumBounces == false</code>, the image does not accumulate the bounces of light, which makes the image more noisy.<br>
 
 		<h3> Results for Russian Roulette redering for different max depth </h3>
 		<p>
