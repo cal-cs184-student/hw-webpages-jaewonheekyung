@@ -203,7 +203,75 @@
 		Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
 
 		<h2>Part 4: Handling self-collisions</h2>
-		Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+		<p>
+			In this section, we implemented a logic to detect and resolve self-collisions within a cloth.
+		</p>
+		
+		<h3>Implementation</h3>
+		<ul>
+			<li>Spatial Hashing: To improve performance and optimization, we implemented a spatial hash map to reduce the number of point mass pairs checked for collisions. We do not have to check for all points which makes a effective method.</li>
+			<li>Hash Cell Assignment: Each point mass is assigned to a cell in the hash map based on its position in space. The hash function converts 3D positions into discrete cell IDs to index into the hash table.</li>
+			<li>Collision Detection: For each simulation step, a point mass looks up other masses in the same and adjacent cells. This ensures we only check collisions between point masses that are spatially close.</li>
+			<li>Collision Resolution: If two masses are closer than the threshold, we compute a correction vector that pushes them apart. We apply these corrections to the two point masses.</li>
+		</ul>
+		
+		<h3>Self-Collision Results</h3>
+		<p>We show the results of self-collision behavior. The cloth is initialized with one pinned side and allowed to fall over itself.</p>
+		<table>
+			<tr>
+				<td style="text-align: center;">
+					<img src="./images/self_collide_1.png" width="300px"/>
+					<figcaption>Early stage</figcaption>
+				</td>
+				<td style="text-align: center;">
+					<img src="./images/self_collide_2.png" width="300px"/>
+					<figcaption>Mid stage</figcaption>
+				</td>
+				<td style="text-align: center;">
+					<img src="./images/self_collide_3.png" width="300px"/>
+					<figcaption>Later stage</figcaption>
+				</td>
+			</tr>
+
+		</table>
+		
+		<h3>Results based on Parameter Change</h3>
+		<p> Here are some experiments to compare based on density and ks.</p>
+		<h4>Density</h4>
+		<ul>
+			<li><strong>Low density (density = 1):</strong> The cloth is light and falls slowly. I has looser folds that do not press into each other much.</li>
+			<li><strong>High density (density = 1000):</strong> The cloth crashes down rapidly and compresses under its own weight. More frequent self-collisions can be seen.</li>
+		</ul>
+		<table>
+			<tr>
+				<td style="text-align: center;">
+					<img src="./images/self_collision_low_density.png" width="400px"/>
+					<figcaption>Low density</figcaption>
+				</td>
+				<td style="text-align: center;">
+					<img src="./images/self_collision_high_density.png" width="400px"/>
+					<figcaption>High density</figcaption>
+				</td>
+			</tr>
+		</table>
+		
+		<h4>Spring Constant (ks)</h4>
+		<ul>
+			<li><strong>Low ks (ks = 1):</strong> Soft springs makes easier deformation. Cloth stretches into exaggerated folds and more deeply interpenetrates. A lot of collisions can be seen.</li>
+			<li><strong>High ks (ks = 10000):</strong> Stiff springs resist compression. The cloth retains shape and bounces slightly upon folding.</li>
+		</ul>
+		<table>
+			<tr>
+				<td style="text-align: center;">
+					<img src="./images/self_collision_low_ks.png" width="400px"/>
+					<figcaption>Low ks</figcaption>
+				</td>
+				<td style="text-align: center;">
+					<img src="./images/self_collision_high_ks.png" width="400px"/>
+					<figcaption>High ks</figcaption>
+				</td>
+			</tr>
+		</table>
 
 		<h2>Part 5: Shaders</h2>
 		Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
