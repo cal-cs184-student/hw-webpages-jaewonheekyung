@@ -80,7 +80,124 @@
 		</div>
 
 		<h2>Part 2: Simulation via numerical integration</h2>
-		Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+		<p>
+			In Part 2, we examine how simulation parameters like spring constant ks, density, and damping affect cloth behavior.
+			The simulation was paused using P, values adjusted in default, and resumed or restarted with P or R.
+		</p>
+		<p> Below, we explain how we implmented the logic, and show some comparisons with different parameters. We examine how the cloth behavior changes.</p>
+		
+		<h2>Implementation</h2>
+		<h3>(1) Compute Total Force on Each Point Mass</h3>
+		<ul>
+			<li>First, Reset all forces in the point mass to zero.</li>
+			<li>For each external acceleration, compute <code>F = m * a</code> and add to every point mass.</li>
+			<li>Then, we loop over all springs:
+			<ul>
+				<li>Skip disabled constraint types based on <code>cp</code>.</li>
+				<li>Apply Hooke's law: <code>F = ks * (||pa - pb|| - l)</code>.</li>
+				<li>Reduce <code>ks</code> for bending springs (<code>ks *= 0.2</code>).</li>
+				<li>Apply force along the direction vector between point masses.</li>
+			</ul>
+			</li>
+		</ul>
+
+		<h3>(2) Verlet Integration for Position Update</h3>
+		<ul>
+			<li>Compute acceleration: <code>a = force / mass</code>.(we skip pinned point masses)</li>
+			<li>Use the formula: <code>new_pos = pos + (1 - d) * (pos - last_pos) + a * delta_t^2</code>.</li>
+			<li>Update last_position to the old position.</li>
+		</ul>
+
+		<h3>(3) Constrain Spring Deformation</h3>
+		<ul>
+			<li>For each spring, compute current length, and we want to make constraints for deformation</li>
+			<li>We check if the length exceeds a particular amount (length > 1.1 * rest_length):
+			<ul>
+				<li>Compute direction and correction vector.</li>
+				<li>If both point masses are movable, apply half the correction to both.</li>
+				<li>If one is pinned, apply the full correction to the movable one. If both are pinned, we skip.</li>
+			</ul>
+			</li>
+		</ul>
+
+		<h3>Spring Constant (ks)</h3>
+		<p>
+			The spring constant <code>ks</code> determines how much the cloth resists stretching. A low value results in a floppy cloth, while a high value makes it stiff and rigid.
+			Below, we examine of the spring constant's effect on cloth behavior.
+		</p>
+		<ul>
+			<li><strong>Low (ks = 1):</strong> The cloth is very stretchy and floppy. We could examine that the cloth is lacking structure<br></li>
+			<li><strong>High (ks = 100000):</strong> The cloth is very stiff and rigid. Cloth holds shape with minimal deformation.<br></li>
+		</ul>
+		<table>
+			<td style="text-align: center;">
+				<img src="./images/ks_low.png" width="400px"/>
+				<figcaption>ks = 1</figcaption>
+			</td>
+			<td style="text-align: center;">
+				<img src="./images/ks_high.png" width="400px"/>
+				<figcaption>ks = 100000</figcaption>
+			</td>
+		</table>
+
+		<h3>Density</h3>
+		<p>
+			The density of the cloth affects how quickly it falls and how much it stretches under its own weight. A low density results in a light cloth that flutters easily, while a high density results in a heavy cloth that falls quickly and stretches noticeably under its own weight.
+			Below, we examine the effect of density on cloth behavior.
+		</p>
+		<ul>
+			<li><strong>Low (density = 1):</strong> The cloth is light, slow descent, and flutters easily.<br></li>
+			<li><strong>High (density = 100):</strong> The cloth is Heavy, falls quickly, and stretches noticeably under weight.<br></li>
+		</ul>
+		<table>
+			<td style="text-align: center;">
+				<img src="./images/density_low.png" width="400px"/>
+				<figcaption>density = 1</figcaption>
+			</td>
+			<td style="text-align: center;">
+				<img src="./images/density_high.png" width="400px"/>
+				<figcaption>density = 100</figcaption>
+			</td>
+		</table>
+
+		<h3>Damping</h3>
+		<p>
+			Damping is a force that opposes motion, simulating air resistance. It affects how quickly the cloth comes to rest after being disturbed. A low damping value results in a cloth that oscillates for a long time before settling, while a high damping value results in a cloth that comes to rest quickly but may appear rigid.
+			Below, we examine the effect of damping on cloth behavior.
+		</p>
+		<ul>
+			<li><strong>No Damping (damping = 0):</strong> The cloth flutters around before resting, oscillating for a long time.<br></li>
+			<li><strong>High Damping (damping = 1):</strong> Cloth comes to rest very quickly but moves unnaturally rigid.<br></li>
+		</ul>
+		<table>
+			<td style="text-align: center;">
+				<img src="./images/damping_low.png" width="400px"/>
+				<figcaption>damping = 0%</figcaption>
+			</td>
+			<td style="text-align: center;">
+				<img src="./images/damping_high.png" width="400px"/>
+				<figcaption>damping = 1%</figcaption>
+			</td>
+		</table>
+
+		<h3>Final State</h3>
+		<p>The images below is the final state(resting) with default parameters:</p>
+		<ul>
+			<li>ks = 5000</li>
+			<li>density = 15</li>
+			<li>damping = 0.2</li>
+		</ul>
+		<table>
+			<td style="text-align: center;">
+				<img src="./images/final.png" width="400px"/>
+				<figcaption>Final Image without Color</figcaption>
+			</td>
+			<td style="text-align: center;">
+				<img src="./images/final_color.png" width="400px"/>
+				<figcaption>Final Image with Color</figcaption>
+			</td>
+		</table>
+
 
 		<h2>Part 3: Handling collisions with other objects</h2>
 		Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
