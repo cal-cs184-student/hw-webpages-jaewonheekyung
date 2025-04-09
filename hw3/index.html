@@ -32,47 +32,230 @@
 
 		<br>
 
-		Link to webpage: (TODO) <a href="https://cs184.eecs.berkeley.edu/sp25">cs184.eecs.berkeley.edu/sp25</a>
-		Link to GitHub repository: (TODO) <a href="https://cs184.eecs.berkeley.edu/sp25">cs184.eecs.berkeley.edu/sp25</a>
+		Link to webpage: <a href="https://cal-cs184-student.github.io/hw-webpages-jaewonheekyung/">https://cal-cs184-student.github.io/hw-webpages-jaewonheekyung/</a><br>
+		Link to GitHub repository: <a href="https://github.com/cal-cs184-student/sp25-hw3-minjok/tree/jaewon">https://github.com/cal-cs184-student/sp25-hw3-minjok/</a>
 
 		<!--
 		We've already added one heading per part, to make your write-up as navigable when grading. Please fit your write-up within these sections!
 		-->
 
 		<h2>Overview</h2>
-		Give a high-level overview of what you implemented in this homework. Think about what you've built as a whole. Share your thoughts on what interesting things you've learned from completing the homework.
+		In Homework 3, we implemented logics generating rays to creating path tracers of the rays.
+		For part 1, we designed how a ray in world space could be mapped to camera space and eventually end up with image coordinates.
+		Here, with the Ray generated, we were able to implement functions to check if the ray intersects with triangles and spheres.
+		For part 2, we introduce a new rendering optimization called "Bounding Volume Hierarchy" where we keep spatial coherence between multiple primitives and efficiently render the entire image by setting a tree-like data structure.
+		For part 3, now we see how light actually travels, intersects, and bounces off from a material.
+		We compute the radiance and illumination based off the optical properties learned from CS 184 lectures including reflection, uniform hemisphere sampling, and importance sampling.
+		Then, in part 4, we develop the bounces of rays by adding global illumination logic with N amount of bounces, and whether it accumulates every ray bounces or not depending on User's input.
+		We also introduce global illumination with Russian Roulette which is a random termination logic to prevent issues occurred with very large N bounces input.
+		Lastly, part 5, we add adaptive sampling where we sample each pixel of the image with different amount of samples based on the convergence of the ray's illuminance, which optimizes the complexity of the rendering computation.
 
 		<h2>Part 1: Ray Generation and Scene Intersection</h2>
-		Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
-
-		<p>Here is an example 2x2 gridlike structure using an HTML table. Each <b>tr</b> is a row and each <b>td</b> is a column in that row. You might find this useful for framing and showing your result images in an organized fashion.</p>
+		<h3>Ray Generation</h3>
+		<p>
+			In the <code>Camera::generate_ray(...)</code> function, it takes a normalized image coordinate \((x, y)\) as an input and produces a Ray in world space transformed from camera space.
+			We first convert the <code>Camera::hFov</code> and <code>Camera::vFov</code> angles from degrees to radians which will be used in transformation.
+			Then, we transfrom the \((x, y)\) coordinates from image space to camera space by applying linear transformation of \( xcamera=(2(x-0.5))*tan( \frac{hFov_rad}{2}) \) and \( ycamera=(2(y-0.5))*tan(\frac{vFov_rad}{2}) \)
+			since the bottom left corner \((0, 0)\) corresponds to \( (-tan( \frac{hFov * x} {2}), -tan( \frac{vFov * y}{2})) \) while the top right corner \((1, 1)\) corresponds to \( (tan(\frac{hFov*x}{2}), tan(\frac{vFov*y}{2})) \).
+			We could create the camera coordinates by creating a <code>Vector3D</code> object of \((xcamera, ycamera, -1)\) coordinates.
+			Since we have the camera coordinates, we can now generate a <code>Ray</code> object in camera space by defining the origin and direction vectors to compute \(R(t)=O+tD\). The direction vector is the difference between the camera coordinates and the origin \((0, 0, 0)\).
+			Lastly, we do matrix-vector multiplication of \(c2w * direction\) to get the direction vector in world space to create the final <code>Ray</code> object in world space.
+			The <code>c2w</code> matrix is a 3x3 matrix that transfroms a vector in camera space to that in world space. Therefore, we get a Ray generated in terms of the camera perspective.
+			<br>
+			<br>
+			In the <code>PathTracer::raytrace_pixel(...)</code> function, we sample individual pixels and generate rays to trace through the scene.
+			For each pixel, we generate <code>ns_aa</code> sample camera rays along one axis by taking <code>ns_aa</code> random samples and normalizing them.
+			Using each normalized sample, we compute a corresponding camera ray and estimate the radiance of the scene along that ray.
+			For each sample, we compute the sample coordinates in image space \((x, y)\), normalize them, and create a random ray by invoking the <code>Camera::generate_ray(...)</code> function, passing in these normalized image coordinates.
+			Also, set the sample's depth to <code>max_ray_depth</code> for later usage.
+			The radiance of each sample ray could be obtained by calling the <code>est_radiance_global_illumination(...)</code> where it will return the RGB Vector3D of the ray.
+			These radiance values are accumulated into the vector <code>Vector3D sum_radiance</code>.
+			Then, we compute the <i>Monte Carlo estimator</i> of the sum radiance by dividing it by the number of samples and get the average color, \(\frac{\sum_{i=0}^{N} radiance}{N}\).
+			We update the <code>sampleBuffer</code> by invoking the <code>sampleBuffer.update_pixel(...)</code>, and even update the <code>sampleCountBuffer</code> to keep track of the sample numbers for each pixel.
+		</p>
 		<div style="display: flex; flex-direction: column; align-items: center;">
 			<table style="width: 100%; text-align: center; border-collapse: collapse;">
-			  <tr>
-				<td style="text-align: center;">
-				  <img src="cornell.png" width="400px"/>
-				  <figcaption>Caption goes here.</figcaption>
-				</td>
-				<td style="text-align: center;">
-				  <img src="cornell.png" width="400px"/>
-				  <figcaption>Caption goes here.</figcaption>
-				</td>
-			  </tr>
-			  <tr>
-				<td style="text-align: center;">
-				  <img src="cornell.png" width="400px"/>
-				  <figcaption>Caption goes here.</figcaption>
-				</td>
-				<td style="text-align: center;">
-				  <img src="cornell.png" width="400px"/>
-				  <figcaption>Caption goes here.</figcaption>
-				</td>
-			  </tr>
+				<tr>
+					<td style="text-align: center;">
+						<img src="./images/CBempty.png" width="300px"/>
+						<figcaption>CBempty after Task 1, 2</figcaption>
+					</td>
+					<td style="text-align: center;">
+						<img src="./images/banana.png" width="300px"/>
+						<figcaption>banana after Task 1, 2</figcaption>
+					</td>
+				</tr>
+			</table>
+		</div>
+
+		<h3>Ray-Triangle Intersection and Möller–Trumbore Intersection Algorithm</h3>
+		<p>
+			In the <code>Triangle::has_intersection(...)</code>, we determine if the ray has an intersection with a triangle using the <i>Möller–Trumbore intersection algorithm</i>.
+			First, we compute the two triangle edges E1 and E2 and compute the vectors from the ray origin to one edge and the direction vector of the ray. Then, we take cross products to calculate the determinant of the matrix.
+			Here, we are able to obtain the \(t-value\) and the <i>barycentric coordinates</i> of the triangle, and thereby determine whether there is an intersection between the given ray and the current triangle.
+			<br>In the <code>Triangle::intersect(...)</code> function, it does the same computation as <code>Triangle::has_intersection(...)</code> function, but also assigns the intersection variables if there is an intersection (true).
+			The member variables are (1) \(n\) the surface normal, computed by taking the barycentric interpolation of the vertex normals of the triangle with the barycentric coordinates computed earlier, 
+			(2) \(t\) the t-value, (3) \(primitive\), the primitive point of the triangle, and (4) \(bsdf\) the bsdf value of the triangle.
+		</p>
+
+		<h3>Ray-Sphere Intersection</h3>
+		<p>
+			In the <code>Sphere::has_intersection(...)</code> function, it basically has the same structure as <code>Triangle::has_intersection(...)</code> but with a different equation.
+			From the equation \((o+td-c)^2-R^2=0\), we solve for this quadratic equation, apply the quadratic formula to get the Discriminant.
+			The discriminant is the flag that tells us whether there was an intersection or not between the ray and the sphere.
+			In the <code>Sphere::intersect(...)</code>, we assign the <code>Intersection</code> object's member variables based on the computation done earlier.
+		</p>
+		<div style="display: flex; flex-direction: column; align-items: center;">
+			<table style="width: 100%; text-align: center; border-collapse: collapse;">
+				<tr>
+					<td style="text-align: center;">
+						<img src="./images/CBempty_2.png" width="300px"/>
+						<figcaption>CBempty after Task 3</figcaption>
+					</td>
+					<td style="text-align: center;">
+						<img src="./images/CBspheres.png" width="300px"/>
+						<figcaption>CBspheres after Task 4</figcaption>
+					</td>
+				</tr>
+			</table>
+		</div>
+
+		<h3>Normal Shading</h3>
+		Here are some images of the small .dae files we have rendered.
+		<div style="display: flex; flex-direction: column; align-items: center;">
+			<table style="width: 100%; text-align: center; border-collapse: collapse;">
+				<tr>
+					<td style="text-align: center;">
+						<img src="./images/CBcoil.png" width="300px"/>
+						<figcaption>CBcoil</figcaption>
+					</td>
+					<td style="text-align: center;">
+						<img src="./images/CBgems.png" width="300px"/>
+						<figcaption>CBgems</figcaption>
+					</td>
+				</tr>
 			</table>
 		</div>
 		
 		<h2>Part 2: Bounding Volume Hierarchy</h2>
-		Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+		<h3>BVH Construction Algorithm</h3>
+		<p>
+			To build the BVH (Bounding Volume Hierarchy), we implement a recursive function called <code>BVHAccel::construct_bvh</code>.
+			The process begins at the root node and recursively partitions the list of <code>Primitive</code>s into increasingly smaller subsets.
+			Through this recursive division, we construct a binary tree made up of BVHNode objects, each representing a portion of the primitives visible in the viewplane.
+			<br><br>
+			<b>BVH Algorithm</b>
+			<br>1. Define the bounding box by iterating through all the primitive from start to end.
+			<br>2. Define the BVH Node with the entire bounding box.
+			<br>3. If there are no more than max_leaf_size primitives in the list, the node we just created is a leaf node and we should update its start and end iterators appropriately.
+			<br>4. Compute the centroid bounding box by iterating through all the primitive from start to end, and getting the centroids of each bounding box primitive.
+			<br>5. Compare the three axes: x, y, z-axis of the centroid bounding box's extent, and get the longest axis.
+			<br>6. Compute the splitting point of the axis.
+			<br>7. Assign the midpoint primitive based on the splitting point.
+			<br>8. Define left and right BVH nodes based on the start, mid, and end primitives.
+		</p>
+		<h3>Heuristic of Choosing the Splitting Point</h3>
+		<p>
+			We defined a Bounding Box object that stores all the centroid of the bounding boxes of every primitives.
+			The centroid bounding box is expanded based off the <code>get_box().centroid()</code> values of each primitive.
+			We iterated through all the primitives from <code>start</code> to <code>end</code> as we have done before to compute the entire bounding box.
+			After we compute the centroid of the bounding boxes separately, we determine the longest axis to determine the splitting point.
+			Once we get the longest axis among the x, y, and z axes of the centroid bounding box's extent, we define the <code>float splitting_point</code> as the midpoint of the longest axis.
+		</p>
+
+		<h3>Intersecting the Bounding Box and BVH</h3>
+		<p>
+			In the <code>BBox::intersect(...)</code> function, we compute the intersection time values for each x, y, and z axes.
+			Here, we use the bounding box intersection equation with the ray members (origin and direction vectors) and the normal vector of the bounding box:
+			\[ t = \frac{(p'-o) \cdot N}{d \cdot N}\]
+			Since we want three separate x, y, z computations for the intersection times, we apply the three equations:
+			\[ t = \frac{(p_x'-o_x)}{d_x}\]
+			\[ t = \frac{(p_y'-o_y)}{d_y}\]
+			\[ t = \frac{(p_z'-o_z)}{d_z}\]
+			Here, p' values could be either min or max of x, y, z, meaning there are pairs of the intersection time values for each x, y, z coordinates, each being min_t and max_t.
+			Then, for each min_t max_t pair, we check which one is the minimum and maximum to determine the final t0 and t1 time values passed by reference to the BBox object.
+			<br><br>
+			In the <code>BVHAccel::has_intersection(...)</code> function, we first get the t0 and t1 values from the Ray's min_t and max_t values.
+			Then, we check the bounding box intersection equation by calling the <code>node->bb.intersect(...)</code> function with the t0 and t1 defined earlier of the given Ray.
+			If it does not interest with the bounding box, we return false.
+			If the two does intersect with the bounding box, then we check if the ray actually has an intersection with one of the BVH Nodes.
+			We check if node is a leaf BVH, then iterate through the primitives from <code>start</code> to <code>end</code> and call <code>*p->has_intersection(ray)</code>.
+			If there exists a primitive that intersects with the ray, then that means there is an intersection with a BVH Node so we return true. Otherwise false.
+			<br>
+			The <code>BVHAccel::intersect(...)</code> function has the same logic as <code>BVHAccel::has_intersection(...)</code> but checks for all nodes no matter if they are leaves or intermediates.
+			If the node is a leaf BVH node, then we check all the primitives and check if intersects with the ray.
+			If so, we set the <code>i->bsdf</code> as the intersecting primitive's bsdf value, and then return true.
+			If the node is not a leaf BVH node, then we recursively call the <code>BVHAccel::intersect(...)</code> function itself passing in <b>node->left</b> and <b>node->right</b> on each calls.
+			If either one of the recursive call returns true, then we return true since there exists a BVH Node that intersects with the ray, otherwise if both are false, then there is no such intersection.
+		</p>
+
+		<h3>Normal Shading Rendered with BVH Acceleration</h3>
+		<div style="display: flex; flex-direction: column; align-items: center;">
+			<table style="width: 100%; text-align: center; border-collapse: collapse;">
+				<tr>
+					<td style="text-align: center;">
+						<img src="./images/beetle.png" width="300px"/>
+						<figcaption>beetle.dae with BVH Acceleration</figcaption>
+					</td>
+					<td style="text-align: center;">
+						<img src="./images/cow.png" width="300px"/>
+						<figcaption>cow.dae with BVH Acceleration</figcaption>
+					</td>
+				</tr>
+			</table>
+		</div>
+		<br>
+		<div style="display: flex; flex-direction: column; align-items: center;">
+			<table style="width: 100%; text-align: center; border-collapse: collapse;">
+				<tr>
+					<td style="text-align: center;">
+						<img src="./images/CBlucy.png" width="300px"/>
+						<figcaption>lucy.dae with BVH Acceleration</figcaption>
+					</td>
+					<td style="text-align: center;">
+						<img src="./images/maxplanck.png" width="300px"/>
+						<figcaption>maxplanck.dae with BVH Acceleration</figcaption>
+					</td>
+				</tr>
+			</table>
+		</div>
+		<br>
+		<div style="display: flex; flex-direction: column; align-items: center;">
+			<table style="width: 100%; text-align: center; border-collapse: collapse;">
+				<tr>
+					<td style="text-align: center;">
+						<img src="./images/CBdragon.png" width="300px"/>
+						<figcaption>dragon.dae with BVH Acceleration</figcaption>
+					</td>
+					<td style="text-align: center;">
+						<img src="./images/teapot.png" width="300px"/>
+						<figcaption>teapot.dae with BVH Acceleration</figcaption>
+					</td>
+				</tr>
+			</table>
+		</div>
+
+		<h3>Comparison between With BVH and Without BVH Acceleration</h3>
+		<p>
+			The data below is the rendering time comparison between without BVH Accleration and with BVH.
+			The BVH optimization significantly improved performance.
+			For beetle.dae, it improved about x239 times, for cow.dae, about x132 times, and for peter.dae, about x1023 times faster.
+			The overall improvement ranges around x100 to x1000.
+			The performance was even better in models with a higher number of primitives.
+			This is likely because the BVH enables us to bypass many unnecessary intersection tests.
+			As the number of primitives increases, the potential for skipping these checks grows, resulting in greater overall performance improvements.
+			<br><br>
+			<b>Without BVH</b>
+			<br> beetle.dae: 8.3826s
+			<br> cow.dae: 6.6407s
+			<br> peter.dae: 59.7706s
+			<br><br>
+			<b>With BVH</b>
+			<br> beetle.dae: 0.0350s
+			<br> cow.dae: 0.0501s
+			<br> peter.dae: 0.0584s
+		</p>
+
 
 		<h2>Part 3: Direct Illumination</h2>
 		<p>
@@ -228,64 +411,64 @@
 		<p>
 			We rendered images with different <b>max depths</b> and <b>accumulative bounces</b> to analyze the effects of recursive ray tracing. 
 		</p>
-		<p>AccumBounces == true</p>
+		<p>AccumBounces == true</p><br>
 		<div style="display: flex; flex-direction: column; align-items: center;">
 			<table style="width: 100%; text-align: center; border-collapse: collapse;">
 				<tr>
 					<td style="text-align: center;">
 						<img src="./images/CBbunny_accum_0.png" width="200px"/>
-						<figcaption>m=0</figcaption>
+						<figcaption>Accumulate up to m=0</figcaption>
 					</td>
 					<td style="text-align: center;">
 						<img src="./images/CBbunny_accum_1.png" width="200px"/>
-						<figcaption>m=1</figcaption>
+						<figcaption>Accumulate up to m=1</figcaption>
 					</td>
 					<td style="text-align: center;">
 						<img src="./images/CBbunny_accum_2.png" width="200px"/>
-						<figcaption>m=2</figcaption>
+						<figcaption>Accumulate up to m=2</figcaption>
 					</td>
 					<td style="text-align: center;">
 						<img src="./images/CBbunny_accum_3.png" width="200px"/>
-						<figcaption>m=3</figcaption>
+						<figcaption>Accumulate up to m=3</figcaption>
 					</td>
 					<td style="text-align: center;">
 						<img src="./images/CBbunny_accum_4.png" width="200px"/>
-						<figcaption>m=4</figcaption>
+						<figcaption>Accumulate up to m=4</figcaption>
 					</td>
 					<td style="text-align: center;">
 						<img src="./images/CBbunny_accum_5.png" width="200px"/>
-						<figcaption>m=5</figcaption>
+						<figcaption>Accumulate up to m=5</figcaption>
 					</td>
 				</tr>
 			</table>
 		</div>
-		<p>AccumBounces == false</p>
+		<p>AccumBounces == false</p><br>
 		<div style="display: flex; flex-direction: column; align-items: center;">
 			<table style="width: 100%; text-align: center; border-collapse: collapse;">
 				<tr>
 					<td style="text-align: center;">
-						<img src="./images/CBbunny_noaccum_0.png" width="200px"/>
-						<figcaption>No Accum m=0</figcaption>
+						<img src="./images/CBbunny_notaccum_0.png" width="200px"/>
+						<figcaption>Not Accumulate, only m=0</figcaption>
 					</td>
 					<td style="text-align: center;">
-						<img src="./images/CBbunny_noaccum_1.png" width="200px"/>
-						<figcaption>m=1</figcaption>
+						<img src="./images/CBbunny_notaccum_1.png" width="200px"/>
+						<figcaption>Not Accumulate, only m=1</figcaption>
 					</td>
 					<td style="text-align: center;">
-						<img src="./images/CBbunny_noaccum_2.png" width="200px"/>
-						<figcaption>m=2</figcaption>
+						<img src="./images/CBbunny_notaccum_2.png" width="200px"/>
+						<figcaption>Not Accumulate, only m=2</figcaption>
 					</td>
 					<td style="text-align: center;">
-						<img src="./images/CBbunny_noaccum_3.png" width="200px"/>
-						<figcaption>m=3</figcaption>
+						<img src="./images/CBbunny_notaccum_3.png" width="200px"/>
+						<figcaption>Not Accumulate, only m=3</figcaption>
 					</td>
 					<td style="text-align: center;">
-						<img src="./images/CBbunny_noaccum_4.png" width="200px"/>
-						<figcaption>m=4</figcaption>
+						<img src="./images/CBbunny_notaccum_4.png" width="200px"/>
+						<figcaption>Not Accumulate, only m=4</figcaption>
 					</td>
 					<td style="text-align: center;">
-						<img src="./images/CBbunny_noaccum_5.png" width="200px"/>
-						<figcaption>m=5</figcaption>
+						<img src="./images/CBbunny_notaccum_5.png" width="200px"/>
+						<figcaption>Not Accumulate, only m=5</figcaption>
 					</td>
 				</tr>
 			</table>
@@ -307,27 +490,27 @@
 				<tr>
 					<td style="text-align: center;">
 						<img src="./images/CBbunny_russian_0.png" width="200px"/>
-						<figcaption>m=0</figcaption>
+						<figcaption>Accumulate up to m=0 with Russian Roulette</figcaption>
 					</td>
 					<td style="text-align: center;">
 						<img src="./images/CBbunny_russian_1.png" width="200px"/>
-						<figcaption>m=1</figcaption>
+						<figcaption>Accumulate up to m=1 with Russian Roulette</figcaption>
+					</td>
+					<td style="text-align: center;">
+						<img src="./images/CBbunny_russian_2.png" width="200px"/>
+						<figcaption>Accumulate up to m=2 with Russian Roulette</figcaption>
 					</td>
 					<td style="text-align: center;">
 						<img src="./images/CBbunny_russian_3.png" width="200px"/>
-						<figcaption>m=2</figcaption>
+						<figcaption>Accumulate up to m=3 with Russian Roulette</figcaption>
 					</td>
 					<td style="text-align: center;">
 						<img src="./images/CBbunny_russian_4.png" width="200px"/>
-						<figcaption>m=3</figcaption>
-					</td>
-					<td style="text-align: center;">
-						<img src="./images/CBbunny_russian_5.png" width="200px"/>
-						<figcaption>m=4</figcaption>
+						<figcaption>Accumulate up to m=4 with Russian Roulette</figcaption>
 					</td>
 					<td style="text-align: center;">
 						<img src="./images/CBbunny_russian_100.png" width="200px"/>
-						<figcaption>m=100</figcaption>
+						<figcaption>Accumulate up to m=100 with Russian Roulette</figcaption>
 					</td>
 				</tr>
 			</table>
@@ -372,21 +555,65 @@
 		<p> From the result, we can see that as we increase the sample rate, the image becomes less noisy, with high quality. </p>
 
 		<h2>Part 5: Adaptive Sampling</h2>
-		Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
-
-		<h2>(Optional) Part 6: Extra Credit Opportunities</h2>
-		Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
-		
-		<h2>Additional Notes (please remove)</h2>
-		<ul>
-			<li>You can also add code if you'd like as so: <code>code code code</code></li>
-			<li>If you'd like to add math equations, 
-				<ul>
-					<li>You can write inline equations like so: \( a^2 + b^2 = c^2 \)</li>
-					<li>You can write display equations like so: \[ a^2 + b^2 = c^2 \]</li>
-				</ul>
-			</li>
-		</ul>
+		<h3>Adaptive Sampling Algorithm</h3>
+		<p>
+			Adaptive Sampling is a method to adjust the number of samples rendered for each pixel based on the convergence of the illuminance of the Rays in the pixel.
+			You can think of how Monte Carlo path tracing and sampling per pixel worked in the previous tasks.
+			We had a fixed number of samples for every pixel of the image, i.e. <code>ns_aa</code>, to iterate through and generate <code>ns_aa</code> random Rays to compute the radiance and illuminance.
+			Now, with adaptive sampling scheme, we are able to implement a design where the number of samples processed could be customized for each pixel based on the statistical status of the illuminances of the Rays in the pixel.
+			We expect to yield a more efficient rendering performance since we do not force every iteration for every pixel, but instead take into account of the convergence, shortening the sampling rate of certain pixels.
+			<br>
+			The way adaptive sampling is implemented could be found in how we do path tracing for the pixels of an image.
+			In the <code>PathTracer::raytrace_pixe(...)</code> function, we keep track of the illuminance of every Ray object per sample.
+			Here, illuminance refers to an optical property of how much luminous flux has fallen to a unit area.
+			We compute the illuminance of a Ray by calling the <code>radiance.illum()</code>, which is the same as \(0.2126*R + 0.7152 * G + 0.0722 * B\) value, the integral of the radiance values times the cosine ratio of vectors.
+			To bring the idea of adaptive sampling, we check if the number of samples processing is a multiple of the number of samples per batch, i.e. <code>samplesPerBatch</code>, defaulted to 32 unless specified.
+			If so, that means we can check the convergence of the ray illuminance and see if we could cut off the sample numbers of the pixel to sample.
+			Before computing the statistical sections, we pre-compute the \(s_1\) and \(s_2\) flags with the following equations.
+			\[s_1=\sum_{i=0}^{N} illuminance \] \[s_2=\sum_{i=0}^{N} illuminance^2\]
+			We compute the mean and variance of the illuminances of all Rays generated for the samples processed so far by computing the following equations.
+			\[\mu = \frac{s_1}{N}\] \[\sigma^2 =\frac{1}{N} \cdot (s_2 - \frac{s_1^2}{N}) \] \[\sigma=\sqrt{\frac{1}{N} \cdot (s_2 - \frac{s_1^2}{N})}\]
+			Now we have all the statistical fundamentals, the mean, variance, and standard deviation, of the illuminance values of the Rays in the pixel samples, and could compute the convergence \(I\).
+			\[I=1.96 \cdot \frac{\sigma}{N} \]
+			If \(I \leq (maxTolerance \cdot \mu) \), that means the sample illuminance values converge to a certain illuminance, so we do not necessarily have to compute all the radiances of the remaining sample pixels.
+			Therefore, set the number of samples to N when N is greater than 0, less than or equal to <code>ns_aa</code>, and is divisible by <code>samplesPerBatch</code>.
+			We update the number of samples of the pixel by setting the element of the <code>sampleCountBuffer</code> to the cut-offed samples number.
+		</p>
+		<h3>Images with Adaptive Sampling</h3>
+		The following images show the result of rendering images with adaptive sampling, i.e. removing noises, and with the sample rate of every pixel.
+		The red part indicates that the pixels in that region has a higher sampling rate compared to others, whereas the blue part shows relatively low sampling rate.
+		<br><br>
+		<div style="display: flex; flex-direction: column; align-items: center;">
+			<table style="width: 100%; text-align: center; border-collapse: collapse;">
+				<p>>>> ./pathtracer -t 8 -s 2048 -a 64 0.05 -l 1 -m 5 -r 480 360 -f bunny.png ../dae/sky/CBbunny.dae</p>
+				<tr>
+					<td style="text-align: center;">
+						<img src="./images/CBbunny_adapt.png" width="300px"/>
+						<figcaption>CBbunny with Adaptive Sampling</figcaption>
+					</td>
+					<td style="text-align: center;">
+						<img src="./images/CBbunny_adapt_rate.png" width="300px"/>
+						<figcaption>CBbunny with Adaptive Sampling (Rate)</figcaption>
+					</td>
+				</tr>
+			</table>
 		</div>
+		<br>
+		<div style="display: flex; flex-direction: column; align-items: center;">
+			<table style="width: 100%; text-align: center; border-collapse: collapse;">
+				<p>>>> ./pathtracer -t 8 -s 2048 -a 64 0.05 -l 1 -m 5 -r 480 360 -f dragon.png ../dae/sky/dragon.dae</p>
+				<tr>
+					<td style="text-align: center;">
+						<img src="./images/dragon_adapt.png" width="300px"/>
+						<figcaption>CBdragon with Adaptive Sampling</figcaption>
+					</td>
+					<td style="text-align: center;">
+						<img src="./images/dragon_adapt_rate.png" width="300px"/>
+						<figcaption>CBdragon with Adaptive Sampling (Rate)</figcaption>
+					</td>
+				</tr>
+			</table>
+		</div>
+
 	</body>
 </html>
