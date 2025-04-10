@@ -28,19 +28,19 @@
 	<body>
 		<div class="container">
 		<h1>CS184/284A Spring 2025 Homework 4 Write-Up</h1>
-		<div style="text-align: center;">Names: </div>
+		<div style="text-align: center;">Names: Jaewon Hur, Heekyung Lee </div>
 
 		<br>
 
-		Link to webpage: (TODO) <a href="https://cs184.eecs.berkeley.edu/sp25">cs184.eecs.berkeley.edu/sp25</a>
+		Link to webpage: <a href="http://127.0.0.1:5500/hw4/index.html">http://127.0.0.1:5500/hw4/index.html</a>
 
 		<br>
 
-		Link to GitHub repository: (TODO) <a href="https://cs184.eecs.berkeley.edu/sp25">cs184.eecs.berkeley.edu/sp25</a>
+		Link to GitHub repository: <a href="https://github.com/cal-cs184-student/sp25-hw4-sagwan">https://github.com/cal-cs184-student/sp25-hw4-sagwan</a>
 
 		<figure>
 			<img src="clothsim.png" alt="Cloth draped over sphere" style="width:70%"/>
-			<figcaption>You can add images with captions!</figcaption>
+			<figcaption>Cloth Simulator</figcaption>
 		</figure>
 
 		<!--
@@ -48,36 +48,72 @@
 		-->
 
 		<h2>Overview</h2>
-		Give a high-level overview of what you implemented in this homework. Think about what you've built as a whole. Share your thoughts on what interesting things you've learned from completing the homework.
+		<p>
+			In this project, we built a real-time cloth simulation using a mass-spring system to model how cloth moves and collides to objects.
+			We constructed data structures to represent the cloth grid, implemented physical constraints between point masses,
+			and applied numerical integration to simulate motion over time.<br><br>
+		  
+			We also handled collisions with external objects like spheres and planes, as well as self-collisions to prevent
+			the cloth from passing through itself. To make the simulation visually realistic, we implemented shading techniques using GLSL.<br><br>
+		  
+			Overall, this project helped us understand both the physics behind cloth behavior and the graphics techniques used to render it.
+		</p><br>
 
 		<h2>Part 1: Masses and springs</h2>
-		Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
-
-		<p>Here is an example 2x2 gridlike structure using an HTML table. Each <b>tr</b> is a row and each <b>td</b> is a column in that row. You might find this useful for framing and showing your result images in an organized fashion.</p>
+		<h3>Structure of Point Masses and Springs</h3>
+		<i>>>> ./clothsim -f ../scene/pinned2.json</i>
 		<div style="display: flex; flex-direction: column; align-items: center;">
 			<table style="width: 100%; text-align: center; border-collapse: collapse;">
 			  <tr>
 				<td style="text-align: center;">
-				  <img src="clothsim.png" width="400px"/>
-				  <figcaption>Caption goes here.</figcaption>
+				  <img src="images/part1_1.png" width="270px"/>
+				  <figcaption>Mass-Spring System of a Plane</figcaption>
 				</td>
 				<td style="text-align: center;">
-				  <img src="clothsim.png" width="400px"/>
-				  <figcaption>Caption goes here.</figcaption>
-				</td>
-			  </tr>
-			  <tr>
-				<td style="text-align: center;">
-				  <img src="clothsim.png" width="400px"/>
-				  <figcaption>Caption goes here.</figcaption>
+				  <img src="images/part1_2.png" width="270px"/>
+				  <figcaption>Grid of PointMasses</figcaption>
 				</td>
 				<td style="text-align: center;">
-				  <img src="clothsim.png" width="400px"/>
-				  <figcaption>Caption goes here.</figcaption>
+				  <img src="images/part1_3.png" width="270px"/>
+				  <figcaption>Springs Connecting PointMasses</figcaption>
 				</td>
 			  </tr>
 			</table>
 		</div>
+		<p>
+			The Cloth::buildGrid() function constructs a physical simulation of a cloth using a point mass-spring system by first generating a 2D grid of PointMass objects and then connecting them with different types of springs.
+			Each point mass represents a small segment of cloth and is placed at a position based on the cloth’s orientation (horizontal or vertical), with optional pinning based on predefined coordinates.
+			After placing the point masses, the function iterates again to connect each point mass to its neighbors with structural springs (to adjacent points), shearing springs (to diagonal neighbors), and bending springs (to every second neighbor), modeling how real cloth resists stretching, shearing, and bending.
+			The algorithm ensures a flexible yet stable network of forces that captures the realistic behavior of fabric under physical constraints.
+			This setup provides the foundation for simulating dynamic cloth motion in a physics engine.
+		</p>
+
+		<h3>Spring Constraints: Structural, Shearing, and Bending</h3>
+		<div style="display: flex; flex-direction: column; align-items: center;">
+			<table style="width: 100%; text-align: center; border-collapse: collapse;">
+			  <tr>
+				<td style="text-align: center;">
+				  <img src="images/part1_without_shearing.png" width="270px"/>
+				  <figcaption><b>(1) Without Shearing Constraints</b></figcaption>
+				</td>
+				<td style="text-align: center;">
+				  <img src="images/part1_only_shearing.png" width="270px"/>
+				  <figcaption><b>(2) Only With Shearing Constraint</b></figcaption>
+				</td>
+				<td style="text-align: center;">
+				  <img src="images/part1_all.png" width="270px"/>
+				  <figcaption><b>(3) With All Constraints</b></figcaption>
+				</td>
+			  </tr>
+			</table>
+		</div>
+		<p>
+			<b>Without any shearing constraints</b>, the wireframe looks like a simple grid made of horizontal and vertical lines, forming square cells between the point masses.
+			<br><b>With only shearing constraints</b>, the grid loses those straight lines and instead has diagonal connections forming a mesh of triangles, giving it a looser, more flexible appearance.
+			<br><b>When all constraints</b> are applied, i.e. structural, shearing, and bending, the wireframe becomes a dense network with horizontal, vertical, diagonal, and longer-range connections, making the cloth look much more reinforced.
+			This full setup allows the cloth to resist stretching, shearing, and folding in a more physically accurate way.
+		</p><br>
+		
 
 		<h2>Part 2: Simulation via numerical integration</h2>
 		<p>
@@ -196,11 +232,73 @@
 				<img src="./images/final_color.png" width="400px"/>
 				<figcaption>Final Image with Color</figcaption>
 			</td>
-		</table>
+		</table><br>
 
 
 		<h2>Part 3: Handling collisions with other objects</h2>
-		Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+		<h3>Handling Collisions: Sphere</h3>
+		<b>Shaded Cloths Resting on a Sphere with Different Spring Constants</b>
+		<i>>>> ./clothsim -f ../scene/sphere.json</i>
+		<div style="display: flex; flex-direction: column; align-items: center;">
+			<table style="width: 100%; text-align: center; border-collapse: collapse;">
+			  <tr>
+				<td style="text-align: center;">
+				  <img src="images/part3_ks500.png" width="270px"/>
+				  <figcaption>Shaded Cloth at ks 500</figcaption>
+				</td>
+				<td style="text-align: center;">
+				  <img src="images/part3_ks5000.png" width="270px"/>
+				  <figcaption>Shaded Cloth at ks 5000</figcaption>
+				</td>
+				<td style="text-align: center;">
+				  <img src="images/part3_ks50000.png" width="270px"/>
+				  <figcaption>Shaded Cloth at ks 50000</figcaption>
+				</td>
+			  </tr>
+			</table>
+		</div>
+		<p>
+			The <code>Sphere::collide</code> function checks if a point mass has collided with a sphere and corrects its position if needed.
+			<br>(1) First, it computes a vector from the sphere's center to the point mass’s current position and measures the distance.
+			<br>(2-i) If the point mass is outside the sphere, it returns early without making changes.
+			<br>(2-ii) If the point mass is inside, it normalizes this direction vector, scales it to the sphere’s radius, and adds it to the sphere’s origin to find the tangent point on the surface where the point mass should be.
+			<br>(3) Then, it calculates a correction vector from the point mass’s previous position to this tangent point, representing how far it should be pushed to resolve the collision.
+			<br>(4) Finally, it updates the point mass’s position by applying the correction vector, scaled by <code>(1 - friction)</code>, to simulate realistic movement and energy loss during the collision.
+		</p><br>
+
+		<b>Q. How different the cloths are with different ks constant values?</b>
+		<p>
+			<b>Low ks (ks = 500):</b> The cloth is very stretchy and floppy. It deforms easily and can be seen to wrap around the sphere.
+			<br><b>Medium ks (ks = 5000):</b> The cloth is moderately stiff. It holds its shape well but still has some flexibility.
+			<br><b>High ks (ks = 50000):</b> The cloth is very stiff and rigid. It barely deforms and retains its shape even when colliding with the sphere.
+		</p>
+
+		<h3>Handling Collisions: Plane</h3>
+		<b>Shaded Cloths Resting on a Plane</b>
+		<i>>>> ./clothsim -f ../scene/plane.json</i>
+		<div style="display: flex; flex-direction: column; align-items: center;">
+			<table style="width: 100%; text-align: center; border-collapse: collapse;">
+			  <tr>
+				<td style="text-align: center;">
+				  <img src="images/part3_plane_normal.png" width="400px"/>
+				  <figcaption>Shaded Cloth Resting on Plane (Normal)</figcaption>
+				</td>
+				<td style="text-align: center;">
+				  <img src="images/part3_plane_custom.png" width="400px"/>
+				  <figcaption>Shaded Cloth Resting on Plane (Custom)</figcaption>
+				</td>
+			  </tr>
+			</table>
+		</div>
+		<p>
+			The <code>Plane::collide</code> function resolves collisions between a point mass and an infinite plane.
+			<br>First, it computes vectors from the plane's reference point to both the point mass's last position and current position, and calculates the dot product of each with the plane's normal vector to determine their relative position.
+			<br>If the dot products have opposite signs, this indicates the point mass has crossed the plane between time steps.
+			<br>The function then calculates the intersection point (called the tangent point) by projecting the movement direction of the point mass onto the plane.
+			<br>It adds a small offset in the normal direction to prevent the point mass from being embedded inside the plane.
+			<br>Finally, it computes a correction vector from the last position to the adjusted tangent point and updates the point mass's current position using this vector, scaled by <code>(1 - friction)</code> to simulate the effect of energy loss during the collision.
+			<br>Additionally, if the point mass is already slightly beneath the plane, it is nudged above the surface using the surface offset to maintain visual and physical correctness.
+		</p><br>
 
 		<h2>Part 4: Handling self-collisions</h2>
 		<p>
@@ -271,24 +369,190 @@
 					<figcaption>High ks</figcaption>
 				</td>
 			</tr>
-		</table>
+		</table><br>
 
 		<h2>Part 5: Shaders</h2>
-		Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+		<h3>Q. What is a shader program and how vertex and fragment shaders work together to create lighting and material effects?</h3>
+		<p>
+			<b>A shader program</b> is a set of small programs that run on the GPU to control how 3D graphics appear on the screen.
+			It’s usually made up of a vertex shader, which handles the position and transformation of each vertex,
+			and a fragment shader, which decides the color and lighting of each pixel.<br><br>
+		  
+			<b>The vertex shader</b> passes data like normals and UV coordinates to the fragment shader,
+			which then uses that information to apply textures and lighting effects.
+			For instance, in a texture shader, the <b>fragment shader</b> might sample a texture image
+			to determine the color of each pixel.<br>
+			Together, these shaders help turn 3D models into realistic, textured images on your screen.
+		</p>
 
-		<h2>(Optional) Part 6: Extra Credit - Additional cloth simulation features!</h2>
-		Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
-		
-		<h2>Additional Notes (please remove)</h2>
-		<ul>
-			<li>You can also add code if you'd like as so: <code>code code code</code></li>
-			<li>If you'd like to add math equations, 
-				<ul>
-					<li>You can write inline equations like so: \( a^2 + b^2 = c^2 \)</li>
-					<li>You can write display equations like so: \[ a^2 + b^2 = c^2 \]</li>
-				</ul>
-			</li>
-		</ul>
+		<h3>Blinn-Phong Shading</h3>
+		<i>>>> ./clothsim -f ../scene/sphere.json</i>
+		<div style="display: flex; flex-direction: column; align-items: center;">
+			<table style="width: 100%; text-align: center; border-collapse: collapse;">
+			  <tr>
+				<td style="text-align: center;">
+				  <img src="./images/part5_phong_ambient.png" width="270px"/>
+				  <figcaption>Blinn-Phong Shading only with Ambient Lighting</figcaption>
+				</td>
+				<td style="text-align: center;">
+				  <img src="./images/part5_phong_diffuse.png" width="270px"/>
+				  <figcaption>Blinn-Phong Shading only with Diffuse Reflection</figcaption>
+				</td>
+				<td style="text-align: center;">
+				  <img src="./images/part5_phong_specular.png" width="270px"/>
+				  <figcaption>Blinn-Phong Shading only with Specular Highlights</figcaption>
+				</td>
+			  </tr>
+			</table>
 		</div>
+		<div style="display: flex; flex-direction: column; align-items: center;">
+			<table style="width: 100%; text-align: center; border-collapse: collapse;">
+			  <tr>
+				<td style="text-align: center;">
+				  <img src="./images/part5_phong_all.png" width="810px"/>
+				  <figcaption>Full Blinn-Phong Shading</figcaption>
+			  </tr>
+			</table>
+		</div>
+		<p>
+			The Blinn-Phong shading model simulates realistic lighting by combining three components: <strong>ambient</strong>, <strong>diffuse</strong>, and <strong>specular</strong> lighting.<br><br>
+		  
+			<strong>Ambient</strong> light represents constant background illumination:<br>
+			<code>vec3 ambient = k_a * I_a;</code><br><br>
+		  
+			<strong>Diffuse</strong> light models how light scatters off rough surfaces, based on the angle between the surface normal and light direction:<br>
+			<code>float diff = max(dot(normal, light_dir), 0.0);</code><br>
+			<code>vec3 diffuse = k_d * diff * attenuation * u_color.rgb;</code><br><br>
+		  
+			<strong>Specular</strong> highlights simulate shiny reflections using the half-vector between the light and view directions:<br>
+			<code>vec3 half_vector = normalize(v_dir + light_dir);</code><br>
+			<code>float spec = pow(max(dot(normal, half_vector), 0.0), p);</code><br>
+			<code>vec3 specular = k_s * attenuation * spec;</code><br><br>
+		  
+			The final color is the sum of these components, blending soft ambient light, directional diffuse shading, and sharp specular highlights.
+		</p><br>
+
+		<h3>Texture Mapping</h3>
+		<div style="display: flex; flex-direction: column; align-items: center;">
+			<table style="width: 100%; text-align: center; border-collapse: collapse;">
+			  <tr>
+				<td style="text-align: center;">
+				  <img src="./images/part5_texture.png" width="810px"/>
+				  <figcaption>Texture Mapping</figcaption>
+			  </tr>
+			</table>
+		</div>
+		<p>
+			For the Texture Mapping, we used our own Oski The Bear texture image. Texture mapping is a technique used to apply a 2D image (texture) onto a 3D surface to give it color and detail.
+			In the given GLSL fragment shader, the function <code>texture(u_texture_3, v_uv)</code> samples a color from the
+			texture <code>u_texture_3</code> using the UV coordinates <code>v_uv</code>, which are passed in from the vertex shader.
+			This sampled color is then assigned to <code>out_color</code>, determining the final color of the fragment.
+			The result is that the 2D texture image is wrapped around the 3D model based on its UV layout.
+		</p><br>
+
+		<h3>Bump and Displacement Mapping</h3>
+		<div style="display: flex; flex-direction: column; align-items: center;">
+			<table style="width: 100%; text-align: center; border-collapse: collapse;">
+			  <tr>
+				<td style="text-align: center;">
+				  <img src="./images/part5_bump_cloth.png" width="400px"/>
+				  <figcaption>Bump Mapping of a Cloth</figcaption>
+				</td>
+				<td style="text-align: center;">
+				  <img src="./images/part5_displacement_cloth.png" width="400px"/>
+				  <figcaption>Displacement Mapping of a Cloth</figcaption>
+				</td>
+			  </tr>
+			</table>
+		</div>
+		<div style="display: flex; flex-direction: column; align-items: center;">
+			<table style="width: 100%; text-align: center; border-collapse: collapse;">
+			  <tr>
+				<td style="text-align: center;">
+				  <img src="./images/part5_bump_sphere.png" width="400px"/>
+				  <figcaption>Bump Mapping of a Sphere</figcaption>
+				</td>
+				<td style="text-align: center;">
+				  <img src="./images/part5_displacement_sphere.png" width="400px"/>
+				  <figcaption>Displacement Mapping of a Sphere</figcaption>
+				</td>
+			  </tr>
+			</table>
+		</div>
+		<div style="display: flex; flex-direction: column; align-items: center;">
+			<table style="width: 100%; text-align: center; border-collapse: collapse;">
+			  <tr>
+				<td style="text-align: center;">
+				  <img src="./images/part5_bump.png" width="400px"/>
+				  <figcaption>Bump Mapping of a Cloth on a Sphere</figcaption>
+				</td>
+				<td style="text-align: center;">
+				  <img src="./images/part5_displacement.png" width="400px"/>
+				  <figcaption>Displacement Mapping of a Cloth on a Sphere</figcaption>
+				</td>
+			  </tr>
+			</table>
+		</div>
+		<p>
+			Bump mapping simulates surface detail by altering how light interacts with the surface,
+			without actually changing the shape of the mesh. As seen in the bump-mapped sphere and cloth,
+			the surface appears textured and detailed, but the silhouette remains perfectly smooth,
+			revealing that the geometry is unchanged.<br><br>
+		  
+			In contrast, displacement mapping physically modifies the mesh by displacing vertices
+			based on a texture map. This creates real surface deformation, which is especially
+			noticeable in the displaced cloth where it drapes more naturally, and in the displaced sphere,
+			where the shape becomes visibly distorted and matches the texture pattern.<br><br>
+		  
+			Overall, while bump mapping is cheaper and good for small-scale surface detail,
+			displacement mapping provides more realistic depth and shape changes at the cost
+			of higher computational complexity.
+		</p><br>
+
+		<h3>Resolutions</h3>
+		<div style="display: flex; flex-direction: column; align-items: center;">
+			<table style="width: 100%; text-align: center; border-collapse: collapse;">
+			  <tr>
+				<td style="text-align: center;">
+				  <img src="./images/part5_bump_sphere_16x16.png" width="400px"/>
+				  <figcaption>Bump Mapping with 16x16 Resolution</figcaption>
+				</td>
+				<td style="text-align: center;">
+				  <img src="./images/part5_displacement_16x16.png" width="400px"/>
+				  <figcaption>Displacement Mapping with 16x16 Resolution</figcaption>
+				</td>
+			  </tr>
+			</table>
+		</div>
+		<div style="display: flex; flex-direction: column; align-items: center;">
+			<table style="width: 100%; text-align: center; border-collapse: collapse;">
+			  <tr>
+				<td style="text-align: center;">
+				  <img src="./images/part5_bump_sphere_128x128.png" width="400px"/>
+				  <figcaption>Bump Mapping with 128x128 Resolution</figcaption>
+				</td>
+				<td style="text-align: center;">
+				  <img src="./images/part5_displacement_128x128.png" width="400px"/>
+				  <figcaption>Displacement Mapping with 128x128 Resolution</figcaption>
+				</td>
+			  </tr>
+			</table>
+		</div>
+		<p>
+			When the sphere mesh is coarse, i.e. <code>-o 16 -a 16</code>, bump mapping still gives the appearance of surface detail,
+			but since it doesn’t modify the mesh geometry, the texture looks smooth and flat when viewed at glancing angles.
+			Displacement mapping, on the other hand, struggles at low resolution—because there are fewer vertices to displace,
+			the texture appears jagged or blocky and fails to capture fine surface variation.<br><br>
+		  
+			At higher resolutions, i.e. <code>-o 128 -a 128</code>, the difference becomes much more apparent.
+			Bump mapping continues to rely on lighting tricks, and while it looks convincing under good lighting,
+			the actual silhouette remains unchanged. In contrast, displacement mapping shines at this resolution—
+			with more vertices to manipulate, the geometry is visibly altered, and the surface detail stands out
+			even in the silhouette. This makes displacement mapping better for realistic deformations,
+			though it comes at a higher computational cost.
+		</p><br>
+
+		<h2>Part 6: Extra Credit - Additional cloth simulation features!</h2>
+		
 	</body>
 </html>
